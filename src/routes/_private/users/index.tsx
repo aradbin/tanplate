@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import TableComponent from "@/components/table/table-component";
 import type { QueryParamType } from "@/lib/db/functions";
 import { userColumns } from "./-columns";
+import { getUserCount, getUsers } from "./-functions";
 
 export const Route = createFileRoute("/_private/users/")({
 	component: RouteComponent,
@@ -17,8 +18,8 @@ function RouteComponent() {
 			columns={userColumns({})}
 			query={query}
 			filters={[]}
-			queryFn={() => {}}
-			queryCountFn={() => {}}
+			queryFn={getUsers}
+			queryCountFn={getUserCount}
 			options={{
 				hasSearch: true,
 			}}

@@ -79,12 +79,12 @@ export default function TableComponent<
 	} = useQuery({
 		queryKey: [
 			query.table,
-			query.pagination?.page,
-			query.pagination?.pageSize,
-			query.sort?.field,
-			query.sort?.order,
 			query.where,
 			query.search?.term,
+			query.sort?.field,
+			query.sort?.order,
+			query.pagination?.page,
+			query.pagination?.pageSize,
 		],
 		queryFn: () => queryFn?.({ data: query }),
 	});
