@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import AvatarComponent from "@/components/common/avatar-component";
 import { TableColumnHeader } from "@/components/table/table-column-header";
 import { TableRowActions } from "@/components/table/table-row-actions";
+import { Badge } from "@/components/ui/badge";
 import type { User } from "@/lib/db/schema";
 import type { TableActionType } from "@/lib/types";
 import { capitalize, formatDate } from "@/lib/utils";
@@ -20,6 +21,16 @@ export const userColumns = ({
 		accessorKey: "role",
 		header: ({ column }) => <TableColumnHeader column={column} title="Role" />,
 		cell: ({ row }) => capitalize(row.original.role),
+		enableSorting: true,
+	},
+	{
+		accessorKey: "banned",
+		header: ({ column }) => (
+			<TableColumnHeader column={column} title="Status" />
+		),
+		cell: ({ row }) => (
+			<Badge>{row.original.banned ? "Banned" : "Active"}</Badge>
+		),
 		enableSorting: true,
 	},
 	{

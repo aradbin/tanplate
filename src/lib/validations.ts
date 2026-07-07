@@ -42,17 +42,25 @@ export const stringRequiredValidation = (
 };
 
 export const booleanValidation = (key: string) => {
-	return z.boolean({ error: `${key} has to be true or false` }).optional();
+	return z.preprocess(
+		(val) => {
+			if (val === "true" || val === true) return true;
+			if (val === "false" || val === false) return false;
+			return undefined;
+		},
+		z.boolean({ error: `${key} has to be true or false` }).optional(),
+	);
 };
 
 export const stringNumberValidation = (
 	key: string,
 	max: number = maxLength,
 ) => {
-	return unionValidation(key, [
-		stringValidation(key, max),
-		numberValidation(key),
-	]);
+	return z
+		.union([stringValidation(key, max), numberValidation(key)], {
+			error: `${key} has invalid value`,
+		})
+		.optional();
 };
 
 export const stringArrayValidation = (key: string, max: number = maxLength) => {
@@ -128,9 +136,14 @@ export const unionValidation = (key: string, array: ZodType[]) => {
 	return z.union(array, { error: `${key} has invalid value` }).optional();
 };
 
-export const enamValidation = (key: string, options: string[]) => {
+export const enamValidation = <const T extends string>(
+	key: string,
+	options: readonly T[],
+) => {
 	return z
-		.enum(options, { error: `${key} must be one of ${options.join(", ")}` })
+		.enum(options as unknown as [T, ...T[]], {
+			error: `${key} must be one of ${options.join(", ")}`,
+		})
 		.optional();
 };
 

@@ -12,3 +12,8 @@ export const genderOptions = [
 	{ id: "female", name: "Female" },
 	{ id: "other", name: "Other" },
 ];
+
+export const booleanOptions = [
+	{ id: "true", name: "Yes" },
+	{ id: "false", name: "No" },
+];

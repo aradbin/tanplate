@@ -13,26 +13,19 @@ import TableReset from "@/components/table/table-reset";
 import TableSearch from "@/components/table/table-search";
 import TableStructure from "@/components/table/table-structure";
 import { TableViewOptions } from "@/components/table/table-view-options";
-import type { QueryParamType, TableType } from "@/lib/db/functions";
+import type { QueryInputType, TableType } from "@/lib/db/types";
 import type { TableFilterType } from "@/lib/types";
 import { defaultPageSize } from "@/lib/variables";
 import { Badge } from "../ui/badge";
 import { Spinner } from "../ui/spinner";
 
-interface TableComponentProps<
-	TData,
-	TValue,
-	TTable extends TableType = TableType,
-> {
+interface TableComponentProps<TData, TValue> {
+	entity: TableType;
 	columns: ColumnDef<TData, TValue>[];
 	filters?: TableFilterType[];
-	query: QueryParamType<TTable>;
-	queryFn?: ({ data }: { data: QueryParamType<TTable> }) => Promise<TData[]>;
-	queryCountFn?: ({
-		data,
-	}: {
-		data: QueryParamType<TTable>;
-	}) => Promise<number>;
+	query: QueryInputType;
+	queryFn?: ({ data }: { data: QueryInputType }) => Promise<TData[]>;
+	queryCountFn?: ({ data }: { data: QueryInputType }) => Promise<number>;
 	options?: {
 		title?: string;
 		hasSearch?: boolean;
@@ -53,11 +46,8 @@ interface TableComponentProps<
 	};
 }
 
-export default function TableComponent<
-	TData,
-	TValue,
-	TTable extends TableType = TableType,
->({
+export default function TableComponent<TData, TValue>({
+	entity,
 	columns,
 	filters,
 	query,
@@ -66,7 +56,7 @@ export default function TableComponent<
 	options,
 	toolbar,
 	children,
-}: TableComponentProps<TData, TValue, TTable>) {
+}: TableComponentProps<TData, TValue>) {
 	const [rowSelection, setRowSelection] = useState({});
 	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
 		options?.initialColumnVisibility ?? {},
@@ -78,7 +68,7 @@ export default function TableComponent<
 		error,
 	} = useQuery({
 		queryKey: [
-			query.table,
+			entity,
 			query.where,
 			query.search?.term,
 			query.sort?.field,
@@ -90,7 +80,7 @@ export default function TableComponent<
 	});
 
 	const { data: tableCount, isLoading: isCountLoading } = useQuery({
-		queryKey: [query.table, "count", query.where, query.search?.term],
+		queryKey: [entity, "count", query.where, query.search?.term],
 		queryFn: () => queryCountFn?.({ data: query }),
 	});
 
@@ -184,9 +174,9 @@ export default function TableComponent<
 						))}
 						<TableReset
 							hasReset={
-								filters?.some((f) => !!f.value) ||
+								filters?.some((f) => f.value !== undefined && f.value !== null) ||
 								table.getState().sorting.length > 0 ||
-								query?.search?.term
+								!!query?.search?.term
 							}
 							preserve={options?.resetPreserve}
 						/>

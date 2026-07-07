@@ -35,6 +35,13 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 		setScrollElement(node);
 	}, []);
 
+	const selectedValues =
+		filter?.value === undefined || filter?.value === null
+			? []
+			: (Array.isArray(filter.value) ? filter.value : [filter.value]).map(
+					String,
+				);
+
 	const filteredOptions = filterSearch
 		? (filter?.options?.filter((o) =>
 				`${o?.name ?? ""} ${o?.email ?? ""}`
@@ -192,26 +199,28 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 					<Filter className="size-3" />
 				)}
 				{capitalize(filter?.label || filter?.key)}
-				{filter?.value?.length > 0 && (
+				{selectedValues.length > 0 && (
 					<>
 						<Separator orientation="vertical" className="mx-2 h-8" />
 						<Badge
 							variant="secondary"
 							className="rounded-sm px-1 font-normal lg:hidden"
 						>
-							{filter.multiple ? filter?.value?.length : 1}
+							{filter.multiple ? selectedValues.length : 1}
 						</Badge>
 						<div className="hidden gap-1 lg:flex">
-							{filter.multiple && filter?.value?.length > 2 ? (
+							{filter.multiple && selectedValues.length > 2 ? (
 								<Badge
 									variant="secondary"
 									className="rounded-sm px-1 font-normal"
 								>
-									{filter?.value?.length} selected
+									{selectedValues.length} selected
 								</Badge>
 							) : (
 								filter?.options
-									?.filter((option) => filter?.value?.includes(option.id))
+									?.filter((option) =>
+										selectedValues.includes(String(option.id)),
+									)
 									.map((option) => (
 										<Badge
 											variant="secondary"
@@ -247,7 +256,9 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 							>
 								{virtualizer.getVirtualItems().map((virtualItem) => {
 									const option = filteredOptions[virtualItem.index];
-									const isSelected = filter?.value?.includes(option.id);
+									const isSelected = selectedValues.includes(
+										String(option.id),
+									);
 									return (
 										<CommandItem
 											key={option.id}
@@ -280,7 +291,7 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 								})}
 							</div>
 						</CommandGroup>
-						{filter?.value?.length > 0 && (
+						{selectedValues.length > 0 && (
 							<>
 								<CommandSeparator />
 								<CommandGroup>
