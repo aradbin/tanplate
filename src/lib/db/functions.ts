@@ -60,13 +60,10 @@ export function dbWhereBuilder<T extends TableType>(
 // transaction via options.client) and can pass options.conditions for custom filters.
 const queryBuilder: DbQueryBuilder = (
 	params,
-	{ client = db, conditions = [] } = {},
+	{ client = db, conditions = [], first = false } = {},
 ) => {
 	const { table, columns, with: withRel, sort, pagination } = params;
 	const t = tables[table] as AnyType;
-
-	const page = pagination?.page ?? 1;
-	const pageSize = pagination?.pageSize ?? defaultPageSize;
 
 	const where = [...dbWhereBuilder(params), ...conditions];
 
@@ -75,11 +72,22 @@ const queryBuilder: DbQueryBuilder = (
 			? [sort.order === "desc" ? desc(t[sort.field]) : asc(t[sort.field])]
 			: undefined;
 
-	return client.query[table].findMany({
+	const config = {
 		columns,
 		with: withRel,
 		where: where.length ? and(...where) : undefined,
 		orderBy,
+	};
+
+	if (first) {
+		return client.query[table].findFirst(config as AnyType) as AnyType;
+	}
+
+	const page = pagination?.page ?? 1;
+	const pageSize = pagination?.pageSize ?? defaultPageSize;
+
+	return client.query[table].findMany({
+		...config,
 		limit: pageSize,
 		offset: (page - 1) * pageSize,
 	} as AnyType) as AnyType;

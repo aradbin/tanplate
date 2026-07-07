@@ -13,6 +13,7 @@ import { Route as PrivateRouteRouteImport } from './routes/_private/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as PrivateIndexRouteImport } from './routes/_private/index'
 import { Route as PrivateUsersIndexRouteImport } from './routes/_private/users/index'
+import { Route as PrivateTasksIndexRouteImport } from './routes/_private/tasks/index'
 import { Route as AuthVerifyIndexRouteImport } from './routes/_auth/verify/index'
 import { Route as AuthRegisterIndexRouteImport } from './routes/_auth/register/index'
 import { Route as AuthLoginIndexRouteImport } from './routes/_auth/login/index'
@@ -34,6 +35,11 @@ const PrivateIndexRoute = PrivateIndexRouteImport.update({
 const PrivateUsersIndexRoute = PrivateUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
+  getParentRoute: () => PrivateRouteRoute,
+} as any)
+const PrivateTasksIndexRoute = PrivateTasksIndexRouteImport.update({
+  id: '/tasks/',
+  path: '/tasks/',
   getParentRoute: () => PrivateRouteRoute,
 } as any)
 const AuthVerifyIndexRoute = AuthVerifyIndexRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/login/': typeof AuthLoginIndexRoute
   '/register/': typeof AuthRegisterIndexRoute
   '/verify/': typeof AuthVerifyIndexRoute
+  '/tasks/': typeof PrivateTasksIndexRoute
   '/users/': typeof PrivateUsersIndexRoute
 }
 export interface FileRoutesByTo {
@@ -71,6 +78,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginIndexRoute
   '/register': typeof AuthRegisterIndexRoute
   '/verify': typeof AuthVerifyIndexRoute
+  '/tasks': typeof PrivateTasksIndexRoute
   '/users': typeof PrivateUsersIndexRoute
 }
 export interface FileRoutesById {
@@ -82,14 +90,28 @@ export interface FileRoutesById {
   '/_auth/login/': typeof AuthLoginIndexRoute
   '/_auth/register/': typeof AuthRegisterIndexRoute
   '/_auth/verify/': typeof AuthVerifyIndexRoute
+  '/_private/tasks/': typeof PrivateTasksIndexRoute
   '/_private/users/': typeof PrivateUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/api/auth/$' | '/login/' | '/register/' | '/verify/' | '/users/'
+    | '/'
+    | '/api/auth/$'
+    | '/login/'
+    | '/register/'
+    | '/verify/'
+    | '/tasks/'
+    | '/users/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/auth/$' | '/login' | '/register' | '/verify' | '/users'
+  to:
+    | '/'
+    | '/api/auth/$'
+    | '/login'
+    | '/register'
+    | '/verify'
+    | '/tasks'
+    | '/users'
   id:
     | '__root__'
     | '/_auth'
@@ -99,6 +121,7 @@ export interface FileRouteTypes {
     | '/_auth/login/'
     | '/_auth/register/'
     | '/_auth/verify/'
+    | '/_private/tasks/'
     | '/_private/users/'
   fileRoutesById: FileRoutesById
 }
@@ -136,6 +159,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/users/'
       preLoaderRoute: typeof PrivateUsersIndexRouteImport
+      parentRoute: typeof PrivateRouteRoute
+    }
+    '/_private/tasks/': {
+      id: '/_private/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof PrivateTasksIndexRouteImport
       parentRoute: typeof PrivateRouteRoute
     }
     '/_auth/verify/': {
@@ -187,11 +217,13 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 
 interface PrivateRouteRouteChildren {
   PrivateIndexRoute: typeof PrivateIndexRoute
+  PrivateTasksIndexRoute: typeof PrivateTasksIndexRoute
   PrivateUsersIndexRoute: typeof PrivateUsersIndexRoute
 }
 
 const PrivateRouteRouteChildren: PrivateRouteRouteChildren = {
   PrivateIndexRoute: PrivateIndexRoute,
+  PrivateTasksIndexRoute: PrivateTasksIndexRoute,
   PrivateUsersIndexRoute: PrivateUsersIndexRoute,
 }
 

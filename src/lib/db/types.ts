@@ -57,6 +57,7 @@ export interface QueryInputType {
 	sort?: { field?: string; order?: "asc" | "desc" };
 	search?: { term?: string | number };
 	where?: Record<string, unknown>;
+	first?: boolean;
 }
 
 // db or an in-flight transaction — lets the builders run in either context.
@@ -78,6 +79,8 @@ export type WhereParams<T extends TableType> = Pick<
 export interface BuilderOptions {
 	client?: DbClient;
 	conditions?: SQL[];
+	// When true, the row builder returns a single row via findFirst instead of findMany.
+	first?: boolean;
 }
 
 export type CountResult = { count: number }[];
