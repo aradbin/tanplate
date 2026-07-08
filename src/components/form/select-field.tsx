@@ -121,27 +121,30 @@ export default function SelectField({ field }: { field: FormFieldType }) {
 				if (!v) setSearch("");
 			}}
 		>
-			<PopoverTrigger>
-				{field?.trigger || (
-					<Button
-						ref={triggerRef}
-						variant="outline"
-						role="combobox"
-						aria-expanded={open}
-						id={field.name}
-						className={cn(
-							"w-full justify-between",
-							!field.value && "text-muted-foreground",
-							!field?.isValid && "border-destructive dark:border-destructive",
-						)}
-					>
-						<div className="flex items-center justify-start">
-							{renderValue()}
-						</div>
-						<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-					</Button>
-				)}
-			</PopoverTrigger>
+			<PopoverTrigger
+				render={
+					field?.trigger || (
+						<Button
+							ref={triggerRef}
+							variant="outline"
+							role="combobox"
+							aria-expanded={open}
+							id={field.name}
+							className={cn(
+								"w-full justify-between",
+								!field.value && "text-muted-foreground",
+								!field?.isValid &&
+									"border-destructive dark:border-destructive",
+							)}
+						>
+							<div className="flex items-center justify-start">
+								{renderValue()}
+							</div>
+							<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+						</Button>
+					)
+				}
+			/>
 			<PopoverContent
 				align="start"
 				className="w-full p-0"

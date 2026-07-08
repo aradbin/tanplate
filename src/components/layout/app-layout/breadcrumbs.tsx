@@ -31,8 +31,8 @@ export function Breadcrumbs({
 										{isLast ? (
 											<BreadcrumbPage>{item.title}</BreadcrumbPage>
 										) : (
-											<BreadcrumbLink>
-												<Link to={item.href}>{item.title}</Link>
+											<BreadcrumbLink render={<Link to={item.href} />}>
+												{item.title}
 											</BreadcrumbLink>
 										)}
 									</BreadcrumbItem>

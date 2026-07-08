@@ -58,7 +58,7 @@ export default function AvatarComponent({
 	if (options?.hideBody) {
 		return (
 			<HoverCard>
-				<HoverCardTrigger>{renderWithLink(renderAvatar())}</HoverCardTrigger>
+				<HoverCardTrigger render={renderWithLink(renderAvatar())} />
 				<HoverCardContent className="flex min-w-64 flex-col gap-0.5" side="top">
 					{renderWithLink(
 						<div className="flex items-center gap-2">
