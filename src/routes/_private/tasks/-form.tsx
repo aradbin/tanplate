@@ -8,7 +8,7 @@ import { useAuth } from "@/providers/auth-provider";
 import {
 	createTask,
 	type createTaskValidator,
-	getTasks,
+	getTask,
 	updateTask,
 	type updateTaskValidator,
 } from "./-functions";
@@ -24,7 +24,7 @@ export default function TaskForm({
 	const { data, isLoading } = useQuery({
 		queryKey: ["tasks", modal?.id],
 		queryFn: () =>
-			getTasks({ data: { where: { id: modal?.id }, first: true } }),
+			getTask({ data: { where: { id: modal?.id } } }),
 		enabled: !!modal?.id && modal?.isOpen,
 	});
 

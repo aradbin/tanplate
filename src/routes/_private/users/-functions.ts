@@ -2,8 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { auth } from "@/lib/auth/config";
-import { authMiddleware } from "@/lib/auth/middleware";
 import { dbCountBuilder, dbQueryBuilder } from "@/lib/db/functions";
+import type { User } from "@/lib/db/schema";
 import type { QueryInputType, QueryParamType } from "@/lib/db/types";
 import {
 	emailRequiredValidation,
@@ -33,25 +33,37 @@ function buildUserQuery(data: QueryInputType): QueryParamType<"user"> {
 		search: { term: data.search?.term, key: ["name", "email"] },
 		where: {
 			id: data.where?.id,
-			banned: data.where?.banned,
+			email: data.where?.email,
 			role: data.where?.role,
+			banned: data.where?.banned,
 		},
 	};
 }
 
 export const getUsers = createServerFn()
-	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(
 		async ({ data }) =>
-			await dbQueryBuilder(buildUserQuery(data), { first: data.first }),
+			(await dbQueryBuilder({
+				data: { params: buildUserQuery(data) },
+			})) as User[],
+	);
+
+export const getUser = createServerFn()
+	.validator((data: QueryInputType) => data)
+	.handler(
+		async ({ data }) =>
+			(await dbQueryBuilder({
+				data: { params: buildUserQuery(data), first: true },
+			})) as User | undefined,
 	);
 
 export const getUserCount = createServerFn()
-	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(async ({ data }) => {
-		const [{ count }] = await dbCountBuilder(buildUserQuery(data));
+		const [{ count }] = await dbCountBuilder({
+			data: { params: buildUserQuery(data) },
+		});
 
 		return count;
 	});
@@ -103,6 +115,32 @@ export const unbanUser = createServerFn({ method: "POST" })
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
 		await auth.api.unbanUser({ headers, body: { userId: data.id } });
+
+		return { id: data.id };
+	});
+
+export const getUserSessions = createServerFn()
+	.validator((data: QueryInputType) => data)
+	.handler(async ({ data }) => {
+		const headers = getRequestHeaders();
+		const { sessions } = await auth.api.listUserSessions({
+			headers,
+			body: {
+				userId: data.where?.id,
+			},
+		});
+
+		return sessions;
+	});
+
+export const revokeUserSession = createServerFn({ method: "POST" })
+	.validator((data: { id: string }) => data)
+	.handler(async ({ data }) => {
+		const headers = getRequestHeaders();
+		await auth.api.revokeUserSession({
+			headers,
+			body: { sessionToken: data.id },
+		});
 
 		return { id: data.id };
 	});

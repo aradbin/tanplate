@@ -24,7 +24,7 @@ interface TableComponentProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	filters?: TableFilterType[];
 	query: QueryInputType;
-	queryFn?: ({ data }: { data: QueryInputType }) => Promise<TData[]>;
+	queryFn: ({ data }: { data: QueryInputType }) => Promise<TData[]>;
 	queryCountFn?: ({ data }: { data: QueryInputType }) => Promise<number>;
 	options?: {
 		title?: string;
@@ -82,6 +82,7 @@ export default function TableComponent<TData, TValue>({
 	const { data: tableCount, isLoading: isCountLoading } = useQuery({
 		queryKey: [entity, "count", query.where, query.search?.term],
 		queryFn: () => queryCountFn?.({ data: query }),
+		enabled: !!queryCountFn,
 	});
 
 	console.log("tableData", tableData, tableCount, error);
@@ -174,7 +175,9 @@ export default function TableComponent<TData, TValue>({
 						))}
 						<TableReset
 							hasReset={
-								filters?.some((f) => f.value !== undefined && f.value !== null) ||
+								filters?.some(
+									(f) => f.value !== undefined && f.value !== null,
+								) ||
 								table.getState().sorting.length > 0 ||
 								!!query?.search?.term
 							}

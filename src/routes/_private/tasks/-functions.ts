@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { authMiddleware } from "@/lib/auth/middleware";
 import {
 	dbCountBuilder,
 	dbDeleteBuilder,
@@ -9,7 +8,6 @@ import {
 } from "@/lib/db/functions";
 import type { NewTask, Task, User } from "@/lib/db/schema";
 import type { QueryInputType, QueryParamType } from "@/lib/db/types";
-import type { AnyType } from "@/lib/types";
 import {
 	stringRequiredValidation,
 	stringValidation,
@@ -61,19 +59,27 @@ function buildTaskQuery(data: QueryInputType): QueryParamType<"tasks"> {
 }
 
 export const getTasks = createServerFn()
-	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(async ({ data }) => {
-		return (await dbQueryBuilder(buildTaskQuery(data), {
-			first: data.first,
-		})) as AnyType;
+		return (await dbQueryBuilder({
+			data: { params: buildTaskQuery(data) },
+		})) as TaskWithUser[];
+	});
+
+export const getTask = createServerFn()
+	.validator((data: QueryInputType) => data)
+	.handler(async ({ data }) => {
+		return (await dbQueryBuilder({
+			data: { params: buildTaskQuery(data), first: true },
+		})) as TaskWithUser | undefined;
 	});
 
 export const getTaskCount = createServerFn()
-	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(async ({ data }) => {
-		const [{ count }] = await dbCountBuilder(buildTaskQuery(data));
+		const [{ count }] = await dbCountBuilder({
+			data: { params: buildTaskQuery(data) },
+		});
 
 		return count;
 	});

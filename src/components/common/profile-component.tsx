@@ -12,6 +12,7 @@ export default function ProfileComponent({
 }: {
 	profile: OptionType & {
 		tag?: string;
+		tagVariant?: "default" | "destructive";
 		items?: { icon: LucideIcon; value: string }[];
 	};
 	footer?: ReactNode;
@@ -27,7 +28,11 @@ export default function ProfileComponent({
 					/>
 					<div className="flex flex-col items-center gap-2">
 						<h1 className="text-xl font-semibold">{profile?.name}</h1>
-						{profile?.tag && <Badge>{capitalize(profile?.tag)}</Badge>}
+						{profile?.tag && (
+							<Badge variant={profile?.tagVariant || "default"}>
+								{capitalize(profile?.tag)}
+							</Badge>
+						)}
 					</div>
 				</div>
 

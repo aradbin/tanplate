@@ -8,7 +8,7 @@ import {
 	stringRequiredValidation,
 } from "@/lib/validations";
 import { roleOptions } from "@/lib/variables";
-import { createUser, getUsers, updateUser } from "./-functions";
+import { createUser, getUser, updateUser } from "./-functions";
 
 export default function UserForm({
 	modal,
@@ -20,7 +20,7 @@ export default function UserForm({
 	const { data, isLoading } = useQuery({
 		queryKey: ["user", modal?.id],
 		queryFn: () =>
-			getUsers({ data: { where: { id: modal?.id }, first: true } }),
+			getUser({ data: { where: { id: modal?.id } } }),
 		enabled: !!modal?.id && modal?.isOpen,
 	});
 

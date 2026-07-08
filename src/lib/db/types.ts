@@ -58,7 +58,6 @@ export interface QueryInputType {
 	sort?: { field?: string; order?: "asc" | "desc" };
 	search?: { term?: string | number };
 	where?: Record<string, unknown>;
-	first?: boolean;
 }
 
 // db or an in-flight transaction — lets the builders run in either context.
@@ -87,10 +86,17 @@ export interface BuilderOptions {
 export type CountResult = { count: number }[];
 
 // Public signature of the row builder: table-generic in, awaited rows out.
-export type DbQueryBuilder = <T extends TableType>(
-	params: QueryParamType<T>,
-	options?: BuilderOptions,
-) => Promise<RowType<T>>;
+// When `first: true` is passed as a literal, the return narrows to a single row.
+export type DbQueryBuilder = {
+	<T extends TableType>(
+		params: QueryParamType<T>,
+		options: BuilderOptions & { first: true },
+	): Promise<RowType<T>[number] | undefined>;
+	<T extends TableType>(
+		params: QueryParamType<T>,
+		options?: BuilderOptions,
+	): Promise<RowType<T>>;
+};
 
 // Public signature of the count builder.
 export type DbCountBuilder = <T extends TableType>(

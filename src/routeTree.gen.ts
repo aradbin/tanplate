@@ -18,6 +18,7 @@ import { Route as AuthVerifyIndexRouteImport } from './routes/_auth/verify/index
 import { Route as AuthRegisterIndexRouteImport } from './routes/_auth/register/index'
 import { Route as AuthLoginIndexRouteImport } from './routes/_auth/login/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as PrivateUsersEmailIndexRouteImport } from './routes/_private/users/$email/index'
 
 const PrivateRouteRoute = PrivateRouteRouteImport.update({
   id: '/_private',
@@ -62,6 +63,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivateUsersEmailIndexRoute = PrivateUsersEmailIndexRouteImport.update({
+  id: '/users/$email/',
+  path: '/users/$email/',
+  getParentRoute: () => PrivateRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/verify/': typeof AuthVerifyIndexRoute
   '/tasks/': typeof PrivateTasksIndexRoute
   '/users/': typeof PrivateUsersIndexRoute
+  '/users/$email/': typeof PrivateUsersEmailIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/verify': typeof AuthVerifyIndexRoute
   '/tasks': typeof PrivateTasksIndexRoute
   '/users': typeof PrivateUsersIndexRoute
+  '/users/$email': typeof PrivateUsersEmailIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/_auth/verify/': typeof AuthVerifyIndexRoute
   '/_private/tasks/': typeof PrivateTasksIndexRoute
   '/_private/users/': typeof PrivateUsersIndexRoute
+  '/_private/users/$email/': typeof PrivateUsersEmailIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
     | '/verify/'
     | '/tasks/'
     | '/users/'
+    | '/users/$email/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/tasks'
     | '/users'
+    | '/users/$email'
   id:
     | '__root__'
     | '/_auth'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/_auth/verify/'
     | '/_private/tasks/'
     | '/_private/users/'
+    | '/_private/users/$email/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -196,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_private/users/$email/': {
+      id: '/_private/users/$email/'
+      path: '/users/$email'
+      fullPath: '/users/$email/'
+      preLoaderRoute: typeof PrivateUsersEmailIndexRouteImport
+      parentRoute: typeof PrivateRouteRoute
+    }
   }
 }
 
@@ -219,12 +238,14 @@ interface PrivateRouteRouteChildren {
   PrivateIndexRoute: typeof PrivateIndexRoute
   PrivateTasksIndexRoute: typeof PrivateTasksIndexRoute
   PrivateUsersIndexRoute: typeof PrivateUsersIndexRoute
+  PrivateUsersEmailIndexRoute: typeof PrivateUsersEmailIndexRoute
 }
 
 const PrivateRouteRouteChildren: PrivateRouteRouteChildren = {
   PrivateIndexRoute: PrivateIndexRoute,
   PrivateTasksIndexRoute: PrivateTasksIndexRoute,
   PrivateUsersIndexRoute: PrivateUsersIndexRoute,
+  PrivateUsersEmailIndexRoute: PrivateUsersEmailIndexRoute,
 }
 
 const PrivateRouteRouteWithChildren = PrivateRouteRoute._addFileChildren(

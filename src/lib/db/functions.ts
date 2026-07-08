@@ -17,10 +17,12 @@ import { defaultPageSize } from "@/lib/variables";
 import { db } from ".";
 import * as schema from "./schema";
 import type {
+	BuilderOptions,
 	DbCountBuilder,
 	DbInsertBuilder,
 	DbQueryBuilder,
 	DbUpdateBuilder,
+	QueryParamType,
 	TableType,
 	WhereParams,
 } from "./types";
@@ -62,9 +64,9 @@ export function dbWhereBuilder<T extends TableType>(
 
 // Returns an un-awaited relational query. Callers await it (optionally inside a
 // transaction via options.client) and can pass options.conditions for custom filters.
-const queryBuilder: DbQueryBuilder = (
-	params,
-	{ client = db, conditions = [], first = false } = {},
+const queryBuilder = ((
+	params: QueryParamType<TableType>,
+	{ client = db, conditions = [], first = false }: BuilderOptions = {},
 ) => {
 	const { table, columns, with: withRel, sort, pagination } = params;
 	const t = tables[table] as AnyType;
@@ -85,21 +87,35 @@ const queryBuilder: DbQueryBuilder = (
 		orderBy,
 	};
 
+	const query = (client.query as AnyType)[table];
+
 	if (first) {
-		return client.query[table].findFirst(config as AnyType) as AnyType;
+		return query.findFirst(config as AnyType) as AnyType;
 	}
 
 	const page = pagination?.page ?? 1;
 	const pageSize = pagination?.pageSize ?? defaultPageSize;
 
-	return client.query[table].findMany({
+	return query.findMany({
 		...config,
 		limit: pageSize,
 		offset: (page - 1) * pageSize,
 	} as AnyType) as AnyType;
-};
+}) as DbQueryBuilder;
 
-export const dbQueryBuilder = createServerOnlyFn(queryBuilder);
+// Layer 2: server-only guard (mirrors dbInsertBuilderFn).
+export const dbQueryBuilderFn = createServerOnlyFn(queryBuilder);
+
+// Layer 3: generic query server fn. Auth runs via middleware so list/detail
+// callers don't repeat it; params flow straight through to the builder.
+export const dbQueryBuilder = createServerFn()
+	.middleware([authMiddleware])
+	.validator((data: { params: QueryParamType; first?: boolean }) => data)
+	.handler(async ({ data }) => {
+		return data.first
+			? await dbQueryBuilderFn(data.params, { first: true })
+			: await dbQueryBuilderFn(data.params);
+	});
 
 // Returns an un-awaited count query using the same WHERE (no sort/pagination).
 const countBuilder: DbCountBuilder = (
@@ -117,7 +133,17 @@ const countBuilder: DbCountBuilder = (
 		.where(where.length ? and(...where) : undefined) as AnyType;
 };
 
-export const dbCountBuilder = createServerOnlyFn(countBuilder);
+// Layer 2: server-only guard (mirrors dbQueryBuilderFn).
+export const dbCountBuilderFn = createServerOnlyFn(countBuilder);
+
+// Layer 3: generic count server fn. Same auth-via-middleware wrapper as
+// dbQueryBuilder; params flow straight through to the count builder.
+export const dbCountBuilder = createServerFn()
+	.middleware([authMiddleware])
+	.validator((data: { params: QueryParamType }) => data)
+	.handler(async ({ data }) => {
+		return await dbCountBuilderFn(data.params);
+	});
 
 // Layer 1: everything comes as props; returns the un-awaited insert query.
 // Injects a generated id and (when provided) createdBy on each row.
