@@ -6,9 +6,10 @@ import type { QueryInputType } from "@/lib/db/types";
 import {
 	booleanValidation,
 	defaultSearchParamValidation,
+	enamValidation,
 	validate,
 } from "@/lib/validations";
-import { booleanOptions } from "@/lib/variables";
+import { booleanOptions, roleOptions } from "@/lib/variables";
 import { useApp } from "@/providers/app-provider";
 import { userColumns } from "./-columns";
 import UserForm from "./-form";
@@ -17,6 +18,10 @@ import { banUser, getUserCount, getUsers, unbanUser } from "./-functions";
 export const Route = createFileRoute("/_private/users/")({
 	validateSearch: validate({
 		...defaultSearchParamValidation,
+		sort: enamValidation("Sort", ["createdAt", "role", "banned"]).catch(
+			undefined,
+		),
+		role: enamValidation("Role", ["user", "admin"]).catch(undefined),
 		banned: booleanValidation("Banned").catch(undefined),
 	}),
 	component: RouteComponent,
@@ -32,6 +37,7 @@ function RouteComponent() {
 		search: { term: search.search },
 		where: {
 			banned: search.banned,
+			role: search.role,
 		},
 	};
 
@@ -54,6 +60,11 @@ function RouteComponent() {
 			})}
 			query={query}
 			filters={[
+				{
+					key: "role",
+					options: roleOptions,
+					value: search.role,
+				},
 				{
 					key: "banned",
 					options: booleanOptions,

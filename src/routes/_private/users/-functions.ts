@@ -34,6 +34,7 @@ function buildUserQuery(data: QueryInputType): QueryParamType<"user"> {
 		where: {
 			id: data.where?.id,
 			banned: data.where?.banned,
+			role: data.where?.role,
 		},
 	};
 }
