@@ -5,11 +5,13 @@ import ModalComponent from "./modal-component";
 export default function DeleteComponent() {
 	const { deleteModal, setDeleteModal } = useApp();
 
+	const action = deleteModal?.action ?? "Delete";
+
 	return (
 		<ModalComponent
 			options={{
-				header: `Delete${deleteModal ? ` ${deleteModal?.title}` : ""}`,
-				description: `Are you sure you want to delete this${deleteModal ? ` ${deleteModal?.title?.toLowerCase()}` : ""}?`,
+				header: `${action}${deleteModal ? ` ${deleteModal?.title}` : ""}`,
+				description: `Are you sure you want to ${action.toLowerCase()} this${deleteModal ? ` ${deleteModal?.title?.toLowerCase()}` : ""}?`,
 				isOpen: !!deleteModal,
 				onClose: () => {
 					setDeleteModal(null);
@@ -33,8 +35,8 @@ export default function DeleteComponent() {
 					}}
 					options={{
 						queryKey: deleteModal?.table,
-						submitText: "Delete",
-						submitVariant: "destructive",
+						submitText: action,
+						submitVariant: deleteModal?.submitVariant ?? "destructive",
 					}}
 				/>
 			)}

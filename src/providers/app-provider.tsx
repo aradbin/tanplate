@@ -15,6 +15,8 @@ type DeleteModalStateType = {
 	id: string | null;
 	title: string;
 	table: AnyType;
+	action?: string;
+	submitVariant?: "default" | "destructive";
 	fn: (args: { data: { id: string } }) => Promise<AnyType>;
 	onSuccess?: () => void;
 } | null;

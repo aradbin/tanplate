@@ -23,3 +23,8 @@ export const taskStatusOptions = [
 	{ id: "in-progress", name: "In Progress" },
 	{ id: "done", name: "Done" },
 ];
+
+export const roleOptions = [
+	{ id: "user", name: "User" },
+	{ id: "admin", name: "Admin" },
+];
