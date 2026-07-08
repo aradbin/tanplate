@@ -15,7 +15,7 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import type { AnyType, FormFieldType } from "@/lib/types";
-import { capitalize, cn } from "@/lib/utils";
+import { capitalize, cn, getErrorMessages } from "@/lib/utils";
 import { validate } from "@/lib/validations";
 
 const colsClass: Record<number, string> = {
@@ -56,9 +56,7 @@ export default function FormComponent({
 	};
 }) {
 	const { queryClient } = useRouteContext({ from: "__root__" });
-	const [messageError, setMessageError] = useState<string | null | undefined>(
-		null,
-	);
+	const [messageError, setMessageError] = useState<string[] | null>(null);
 	const flatFields = fields.flat();
 
 	const defaultValues = flatFields.reduce(
@@ -152,11 +150,7 @@ export default function FormComponent({
 				if (onError) {
 					onError(error);
 				}
-				setMessageError(
-					error instanceof Error
-						? error.message
-						: "Something went wrong. Please try again.",
-				);
+				setMessageError(getErrorMessages(error));
 			}
 		},
 	});
@@ -174,7 +168,7 @@ export default function FormComponent({
 
 	return (
 		<form
-			className={cn("grid gap-4", options?.formClassNames)}
+			className={cn("grid gap-3", options?.formClassNames)}
 			onSubmit={(e) => {
 				e.preventDefault();
 				form.handleSubmit();
@@ -236,12 +230,20 @@ export default function FormComponent({
 				</FieldGroup>
 			))}
 			{children}
-			{messageError && (
-				<Alert variant="destructive" className="border-destructive">
-					<AlertCircle className="size-4" />
-					<AlertTitle>{messageError}</AlertTitle>
-				</Alert>
-			)}
+			{messageError?.length ? (
+				<div className="flex flex-col space-y-2 -mt-1">
+					{messageError?.map((message, index) => (
+						<Alert
+							variant="destructive"
+							className="border-destructive"
+							key={index}
+						>
+							<AlertCircle className="size-4" />
+							<AlertTitle>{message}</AlertTitle>
+						</Alert>
+					))}
+				</div>
+			) : null}
 			<div className="flex flex-row-reverse flex-wrap gap-2">
 				<form.Subscribe selector={(state) => [state.isSubmitting]}>
 					{([isSubmitting]) => (

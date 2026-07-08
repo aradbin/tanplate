@@ -19,7 +19,11 @@ export default function DeleteComponent() {
 			{(props) => (
 				<FormComponent
 					fields={[]}
-					handleSubmit={() => (deleteModal ? () => {} : {})}
+					handleSubmit={() =>
+						deleteModal?.id
+							? deleteModal.fn({ data: { id: deleteModal.id } })
+							: undefined
+					}
 					onSuccess={() => {
 						props.close();
 						deleteModal?.onSuccess?.();

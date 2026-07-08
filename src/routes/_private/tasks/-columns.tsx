@@ -20,7 +20,13 @@ export const taskColumns = ({
 		id: "user",
 		header: ({ column }) => <TableColumnHeader column={column} title="User" />,
 		cell: ({ row }) => (
-			<AvatarComponent user={row.original.user} profile="user" />
+			<AvatarComponent
+				user={row.original.user}
+				profile="user"
+				options={{
+					hideBody: true,
+				}}
+			/>
 		),
 	},
 	{

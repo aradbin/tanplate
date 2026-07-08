@@ -144,3 +144,27 @@ export const normalizePhone = (phone: string | null | undefined): string => {
 	if (!phone) return "";
 	return phone.replace(/\D/g, "");
 };
+
+// Normalizes an unknown error into a list of human-readable messages.
+// Server function Zod validation errors arrive with `message` as a
+// JSON-stringified array of issues; other errors carry a plain string.
+export const getErrorMessages = (error: unknown): string[] => {
+	const raw =
+		error instanceof Error && error.message
+			? error.message
+			: "Something went wrong. Please try again.";
+
+	try {
+		const parsed = JSON.parse(raw);
+		if (Array.isArray(parsed)) {
+			const messages = parsed
+				.map((item) => item?.message ?? String(item))
+				.filter((message): message is string => Boolean(message));
+			if (messages.length) return messages;
+		}
+	} catch {
+		// raw is a plain string, fall through
+	}
+
+	return [raw];
+};

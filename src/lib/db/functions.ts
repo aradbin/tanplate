@@ -1,4 +1,5 @@
-import { createServerOnlyFn } from "@tanstack/react-start";
+import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { generateId } from "better-auth";
 import {
 	and,
 	asc,
@@ -10,13 +11,16 @@ import {
 	or,
 	type SQL,
 } from "drizzle-orm";
+import { authMiddleware } from "@/lib/auth/middleware";
 import type { AnyType } from "@/lib/types";
 import { defaultPageSize } from "@/lib/variables";
 import { db } from ".";
 import * as schema from "./schema";
 import type {
 	DbCountBuilder,
+	DbInsertBuilder,
 	DbQueryBuilder,
+	DbUpdateBuilder,
 	TableType,
 	WhereParams,
 } from "./types";
@@ -70,7 +74,9 @@ const queryBuilder: DbQueryBuilder = (
 	const orderBy =
 		sort?.field && t[sort.field]
 			? [sort.order === "desc" ? desc(t[sort.field]) : asc(t[sort.field])]
-			: undefined;
+			: t.createdAt
+				? [desc(t.createdAt)]
+				: undefined;
 
 	const config = {
 		columns,
@@ -112,3 +118,96 @@ const countBuilder: DbCountBuilder = (
 };
 
 export const dbCountBuilder = createServerOnlyFn(countBuilder);
+
+// Layer 1: everything comes as props; returns the un-awaited insert query.
+// Injects a generated id and (when provided) createdBy on each row.
+const insertBuilder: DbInsertBuilder = (
+	{ table, values, userId },
+	{ client = db } = {},
+) => {
+	const t = tables[table] as AnyType;
+	const list = Array.isArray(values) ? values : [values];
+
+	const rows = list.map((v: AnyType) => ({
+		id: v.id ?? generateId(),
+		...v,
+		...(userId ? { createdBy: userId } : {}),
+		createdAt: new Date(),
+	}));
+
+	return client.insert(t).values(rows).returning() as AnyType;
+};
+
+// Layer 2: server-only guard (mirrors dbQueryBuilder).
+export const dbInsertBuilderFn = createServerOnlyFn(insertBuilder);
+
+// Layer 3: generic insert server fn. Auth runs via middleware; the payload is
+// prepared here (createdBy from the authed user) before awaiting the builder.
+export const dbInsertBuilder = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator((data: { table: TableType; values: AnyType }) => data)
+	.handler(async ({ data, context }) => {
+		return await dbInsertBuilderFn({
+			table: data.table,
+			values: data.values,
+			userId: context.user.id,
+		});
+	});
+
+// Layer 1: everything comes as props; returns the un-awaited update query.
+// Injects (when provided) updatedBy; `updatedAt` is set automatically by the
+// schema's $onUpdateFn. `where` targets rows via dbWhereBuilder (so the
+// soft-delete guard applies just like queries).
+const updateBuilder: DbUpdateBuilder = (
+	{ table, values, where, userId },
+	{ client = db, conditions = [] } = {},
+) => {
+	const t = tables[table] as AnyType;
+	const conds = [...dbWhereBuilder({ table, where }), ...conditions];
+
+	return client
+		.update(t)
+		.set({
+			...values,
+			...(userId ? { updatedBy: userId } : {}),
+		})
+		.where(conds.length ? and(...conds) : undefined)
+		.returning() as AnyType;
+};
+
+// Layer 2: server-only guard (mirrors dbInsertBuilderFn).
+export const dbUpdateBuilderFn = createServerOnlyFn(updateBuilder);
+
+// Layer 3: generic update server fn. Auth runs via middleware; the payload is
+// prepared here (updatedBy from the authed user) before awaiting the builder.
+export const dbUpdateBuilder = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator(
+		(data: { table: TableType; values: AnyType; where: AnyType }) => data,
+	)
+	.handler(async ({ data, context }) => {
+		return await dbUpdateBuilderFn({
+			table: data.table,
+			values: data.values,
+			where: data.where,
+			userId: context.user.id,
+		});
+	});
+
+// Generic soft-delete server fn. Mirrors dbUpdateBuilder: auth runs via
+// middleware, and the soft-delete values (deletedAt + deletedBy from the authed
+// user) are derived here, then applied by reusing dbUpdateBuilderFn. `where`
+// flows through dbWhereBuilder just like the update path.
+export const dbDeleteBuilder = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
+	.validator((data: { table: TableType; where: AnyType }) => data)
+	.handler(async ({ data, context }) => {
+		return await dbUpdateBuilderFn({
+			table: data.table,
+			values: {
+				deletedAt: new Date().toISOString(),
+				deletedBy: context.user.id,
+			},
+			where: data.where,
+		});
+	});

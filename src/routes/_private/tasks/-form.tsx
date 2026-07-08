@@ -1,9 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import ModalComponent from "@/components/common/modal-component";
 import FormComponent from "@/components/form/form-component";
-import type { AnyType, FormFieldType, ModalStateType } from "@/lib/types";
-import { stringRequiredValidation } from "@/lib/validations";
-import { getTasks } from "./-functions";
+import type { FormFieldType, ModalStateType } from "@/lib/types";
+import { stringRequiredValidation, stringValidation } from "@/lib/validations";
+import { taskStatusOptions } from "@/lib/variables";
+import { useAuth } from "@/providers/auth-provider";
+import {
+	createTask,
+	type createTaskValidator,
+	getTasks,
+	updateTask,
+	type updateTaskValidator,
+} from "./-functions";
 
 export default function TaskForm({
 	modal,
@@ -12,12 +20,15 @@ export default function TaskForm({
 	modal: ModalStateType;
 	setModal: (state: ModalStateType) => void;
 }) {
+	const { user } = useAuth();
 	const { data, isLoading } = useQuery({
 		queryKey: ["tasks", modal?.id],
 		queryFn: () =>
 			getTasks({ data: { where: { id: modal?.id }, first: true } }),
 		enabled: !!modal?.id && modal?.isOpen,
 	});
+
+	console.log("data", modal?.id, data);
 
 	const formFields: FormFieldType[][] = [
 		[
@@ -29,10 +40,37 @@ export default function TaskForm({
 		],
 		[
 			{
+				name: "status",
+				type: "select",
+				options: taskStatusOptions,
+				validationOnSubmit: stringRequiredValidation("Status"),
+				placeholder: "Enter task status",
+				defaultValue: "todo",
+			},
+		],
+		[
+			{
+				name: "dueDate",
+				type: "date",
+				validationOnSubmit: stringRequiredValidation("Due Date"),
+				placeholder: "Enter due date",
+			},
+		],
+		[
+			{
 				name: "description",
 				type: "textarea",
-				validationOnSubmit: stringRequiredValidation("Description", 1000),
+				validationOnSubmit: stringValidation("Description", 1000),
 				placeholder: "Enter task description",
+			},
+		],
+		[
+			{
+				name: "userId",
+				type: "hidden",
+				validationOnSubmit: stringRequiredValidation("User", 1000),
+				placeholder: "Enter user",
+				defaultValue: user?.id,
 			},
 		],
 	];
@@ -41,7 +79,7 @@ export default function TaskForm({
 		<ModalComponent
 			variant="sheet"
 			options={{
-				header: modal?.id ? "Edit Department" : "Create Department",
+				header: modal?.id ? "Edit Task" : "Create Task",
 				isOpen: modal?.isOpen,
 				onClose: () => {
 					setModal(null);
@@ -51,10 +89,23 @@ export default function TaskForm({
 			{(props) => (
 				<FormComponent
 					fields={formFields}
-					handleSubmit={(values: Record<string, AnyType>) => {
-						console.log(values);
-					}}
-					values={modal?.isOpen && modal?.id && data ? data : {}}
+					handleSubmit={(
+						values: typeof createTaskValidator | typeof updateTaskValidator,
+					) =>
+						modal?.id
+							? updateTask({ data: { ...values, id: modal.id } })
+							: createTask({ data: values })
+					}
+					values={
+						modal?.isOpen && modal?.id && data
+							? {
+									...data,
+									userId: user?.id,
+								}
+							: {
+									userId: user?.id,
+								}
+					}
 					onSuccess={() => {
 						props.close();
 					}}

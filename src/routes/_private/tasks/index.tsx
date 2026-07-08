@@ -12,11 +12,14 @@ import { taskStatusOptions } from "@/lib/variables";
 import { useApp } from "@/providers/app-provider";
 import { taskColumns } from "./-columns";
 import TaskForm from "./-form";
-import { getTaskCount, getTasks } from "./-functions";
+import { deleteTask, getTaskCount, getTasks } from "./-functions";
 
 export const Route = createFileRoute("/_private/tasks/")({
 	validateSearch: validate({
 		...defaultSearchParamValidation,
+		sort: enamValidation("Sort", ["createdAt", "status", "dueDate"]).catch(
+			undefined,
+		),
 		status: enamValidation("Status", ["todo", "in-progress", "done"]).catch(
 			undefined,
 		),
@@ -26,7 +29,7 @@ export const Route = createFileRoute("/_private/tasks/")({
 
 function RouteComponent() {
 	const search = Route.useSearch();
-	const { openModal } = useApp();
+	const { openModal, setDeleteModal } = useApp();
 
 	const query: QueryInputType = {
 		pagination: { page: search.page, pageSize: search.pageSize },
@@ -43,7 +46,13 @@ function RouteComponent() {
 			columns={taskColumns({
 				actions: {
 					edit: (id) => openModal(TaskForm, { id }),
-					delete: (id) => openModal(TaskForm, { id }),
+					delete: (id) =>
+						setDeleteModal({
+							id,
+							title: "Task",
+							table: "tasks",
+							fn: deleteTask,
+						}),
 				},
 			})}
 			query={query}

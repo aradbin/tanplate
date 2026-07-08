@@ -15,6 +15,7 @@ type DeleteModalStateType = {
 	id: string | null;
 	title: string;
 	table: AnyType;
+	fn: (args: { data: { id: string } }) => Promise<AnyType>;
 	onSuccess?: () => void;
 } | null;
 

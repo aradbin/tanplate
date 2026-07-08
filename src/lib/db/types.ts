@@ -1,6 +1,7 @@
 import type { SQL } from "drizzle-orm";
 import type { db } from "@/lib/db";
 import type { PaginationType } from "../types";
+import type * as schema from "./schema";
 
 export type TableType = keyof typeof db.query;
 
@@ -96,3 +97,38 @@ export type DbCountBuilder = <T extends TableType>(
 	params: QueryParamType<T>,
 	options?: BuilderOptions,
 ) => Promise<CountResult>;
+
+// The insert shape ($inferInsert) for a given table.
+export type InsertType<T extends TableType> = (typeof schema)[T] extends {
+	$inferInsert: infer I;
+}
+	? I
+	: never;
+
+// Everything the insert builder needs comes as props; userId becomes createdBy.
+export interface InsertParams<T extends TableType> {
+	table: T;
+	values: InsertType<T> | InsertType<T>[];
+	userId?: string;
+}
+
+// Public signature of the insert builder.
+export type DbInsertBuilder = <T extends TableType>(
+	params: InsertParams<T>,
+	options?: { client?: DbClient },
+) => Promise<RowType<T>>;
+
+// Everything the update builder needs comes as props; userId becomes updatedBy.
+// `where` targets the rows to update (mirrors the query/count builders).
+export interface UpdateParams<T extends TableType> {
+	table: T;
+	values: Partial<InsertType<T>>;
+	where: TableWhereType<T>;
+	userId?: string;
+}
+
+// Public signature of the update builder.
+export type DbUpdateBuilder = <T extends TableType>(
+	params: UpdateParams<T>,
+	options?: BuilderOptions,
+) => Promise<RowType<T>>;
