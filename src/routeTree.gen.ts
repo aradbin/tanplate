@@ -14,6 +14,7 @@ import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as PrivateIndexRouteImport } from './routes/_private/index'
 import { Route as PrivateUsersIndexRouteImport } from './routes/_private/users/index'
 import { Route as PrivateTasksIndexRouteImport } from './routes/_private/tasks/index'
+import { Route as PrivateProfileIndexRouteImport } from './routes/_private/profile/index'
 import { Route as AuthVerifyIndexRouteImport } from './routes/_auth/verify/index'
 import { Route as AuthRegisterIndexRouteImport } from './routes/_auth/register/index'
 import { Route as AuthLoginIndexRouteImport } from './routes/_auth/login/index'
@@ -41,6 +42,11 @@ const PrivateUsersIndexRoute = PrivateUsersIndexRouteImport.update({
 const PrivateTasksIndexRoute = PrivateTasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
+  getParentRoute: () => PrivateRouteRoute,
+} as any)
+const PrivateProfileIndexRoute = PrivateProfileIndexRouteImport.update({
+  id: '/profile/',
+  path: '/profile/',
   getParentRoute: () => PrivateRouteRoute,
 } as any)
 const AuthVerifyIndexRoute = AuthVerifyIndexRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/login/': typeof AuthLoginIndexRoute
   '/register/': typeof AuthRegisterIndexRoute
   '/verify/': typeof AuthVerifyIndexRoute
+  '/profile/': typeof PrivateProfileIndexRoute
   '/tasks/': typeof PrivateTasksIndexRoute
   '/users/': typeof PrivateUsersIndexRoute
   '/users/$email/': typeof PrivateUsersEmailIndexRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginIndexRoute
   '/register': typeof AuthRegisterIndexRoute
   '/verify': typeof AuthVerifyIndexRoute
+  '/profile': typeof PrivateProfileIndexRoute
   '/tasks': typeof PrivateTasksIndexRoute
   '/users': typeof PrivateUsersIndexRoute
   '/users/$email': typeof PrivateUsersEmailIndexRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_auth/login/': typeof AuthLoginIndexRoute
   '/_auth/register/': typeof AuthRegisterIndexRoute
   '/_auth/verify/': typeof AuthVerifyIndexRoute
+  '/_private/profile/': typeof PrivateProfileIndexRoute
   '/_private/tasks/': typeof PrivateTasksIndexRoute
   '/_private/users/': typeof PrivateUsersIndexRoute
   '/_private/users/$email/': typeof PrivateUsersEmailIndexRoute
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/login/'
     | '/register/'
     | '/verify/'
+    | '/profile/'
     | '/tasks/'
     | '/users/'
     | '/users/$email/'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/verify'
+    | '/profile'
     | '/tasks'
     | '/users'
     | '/users/$email'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/_auth/login/'
     | '/_auth/register/'
     | '/_auth/verify/'
+    | '/_private/profile/'
     | '/_private/tasks/'
     | '/_private/users/'
     | '/_private/users/$email/'
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       path: '/tasks'
       fullPath: '/tasks/'
       preLoaderRoute: typeof PrivateTasksIndexRouteImport
+      parentRoute: typeof PrivateRouteRoute
+    }
+    '/_private/profile/': {
+      id: '/_private/profile/'
+      path: '/profile'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof PrivateProfileIndexRouteImport
       parentRoute: typeof PrivateRouteRoute
     }
     '/_auth/verify/': {
@@ -236,6 +255,7 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 
 interface PrivateRouteRouteChildren {
   PrivateIndexRoute: typeof PrivateIndexRoute
+  PrivateProfileIndexRoute: typeof PrivateProfileIndexRoute
   PrivateTasksIndexRoute: typeof PrivateTasksIndexRoute
   PrivateUsersIndexRoute: typeof PrivateUsersIndexRoute
   PrivateUsersEmailIndexRoute: typeof PrivateUsersEmailIndexRoute
@@ -243,6 +263,7 @@ interface PrivateRouteRouteChildren {
 
 const PrivateRouteRouteChildren: PrivateRouteRouteChildren = {
   PrivateIndexRoute: PrivateIndexRoute,
+  PrivateProfileIndexRoute: PrivateProfileIndexRoute,
   PrivateTasksIndexRoute: PrivateTasksIndexRoute,
   PrivateUsersIndexRoute: PrivateUsersIndexRoute,
   PrivateUsersEmailIndexRoute: PrivateUsersEmailIndexRoute,

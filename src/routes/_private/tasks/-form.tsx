@@ -23,8 +23,7 @@ export default function TaskForm({
 	const { user } = useAuth();
 	const { data, isLoading } = useQuery({
 		queryKey: ["tasks", modal?.id],
-		queryFn: () =>
-			getTask({ data: { where: { id: modal?.id } } }),
+		queryFn: () => getTask({ data: { where: { id: modal?.id } } }),
 		enabled: !!modal?.id && modal?.isOpen,
 	});
 

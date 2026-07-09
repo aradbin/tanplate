@@ -11,7 +11,7 @@ export default function ProfileComponent({
 	footer,
 }: {
 	profile: OptionType & {
-		tag?: string;
+		tag?: string | ReactNode;
 		tagVariant?: "default" | "destructive";
 		items?: { icon: LucideIcon; value: string }[];
 	};
@@ -19,7 +19,7 @@ export default function ProfileComponent({
 }) {
 	return (
 		<Card>
-			<CardContent className="space-y-4">
+			<CardContent className="relative space-y-4">
 				<div className="flex flex-col items-center gap-2">
 					<AvatarComponent
 						user={profile}
@@ -28,11 +28,14 @@ export default function ProfileComponent({
 					/>
 					<div className="flex flex-col items-center gap-2">
 						<h1 className="text-xl font-semibold">{profile?.name}</h1>
-						{profile?.tag && (
-							<Badge variant={profile?.tagVariant || "default"}>
-								{capitalize(profile?.tag)}
-							</Badge>
-						)}
+						{profile?.tag &&
+							(typeof profile?.tag === "string" ? (
+								<Badge variant={profile?.tagVariant || "default"}>
+									{capitalize(profile?.tag)}
+								</Badge>
+							) : (
+								profile?.tag
+							))}
 					</div>
 				</div>
 

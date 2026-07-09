@@ -49,7 +49,7 @@ export function NavUser() {
 						{user && <AvatarComponent user={user} />}
 					</DropdownMenuLabel>
 					<DropdownMenuSeparator />
-					<DropdownMenuItem render={<Link to="/" />}>
+					<DropdownMenuItem render={<Link to="/profile" />}>
 						<User />
 						Profile
 					</DropdownMenuItem>

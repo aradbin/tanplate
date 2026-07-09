@@ -3,7 +3,6 @@ import { Ban, ShieldCheck } from "lucide-react";
 import AvatarComponent from "@/components/common/avatar-component";
 import { TableColumnHeader } from "@/components/table/table-column-header";
 import { TableRowActions } from "@/components/table/table-row-actions";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
@@ -13,6 +12,7 @@ import {
 import type { User } from "@/lib/db/schema";
 import type { TableActionType } from "@/lib/types";
 import { capitalize, formatDate } from "@/lib/utils";
+import UserStatusBadge from "./-components/user-status-badge";
 
 export const userColumns = ({
 	actions,
@@ -37,9 +37,7 @@ export const userColumns = ({
 		header: ({ column }) => (
 			<TableColumnHeader column={column} title="Status" />
 		),
-		cell: ({ row }) => (
-			<Badge>{row.original.banned ? "Banned" : "Active"}</Badge>
-		),
+		cell: ({ row }) => <UserStatusBadge user={row.original} />,
 		enableSorting: true,
 	},
 	{
