@@ -7,7 +7,11 @@ const SMTP_USER = process.env.SMTP_USER as string;
 const BASE_URL = process.env.VITE_BASE_URL as string;
 
 const transporter = nodemailer.createTransport({
-	service: "gmail",
+	host: "smtp.gmail.com",
+	port: 465,
+	secure: true,
+	logger: true,
+	debug: true,
 	auth: {
 		user: SMTP_USER,
 		pass: process.env.SMTP_PASS,
@@ -46,6 +50,10 @@ export async function sendEmail({
 	text?: string;
 	replyTo?: string;
 }) {
+	await transporter.verify();
+	console.log("SMTP ready");
+	console.log(SMTP_USER);
+	console.log(process.env.SMTP_PASS);
 	try {
 		return await transporter.sendMail({
 			// Address must stay the authenticated Gmail user to keep DKIM/SPF
