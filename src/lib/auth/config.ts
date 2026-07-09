@@ -17,6 +17,13 @@ export const auth = betterAuth({
 		minPasswordLength: 8,
 		requireEmailVerification: true,
 		revokeSessionsOnPasswordReset: true,
+		onExistingUserSignUp: async ({ user }) => {
+			void sendEmail({
+				to: user.email,
+				subject: "Sign-up attempt with your email",
+				html: "<p>Someone tried to create an account using your email address. If this was you, try signing in instead. If not, you can safely ignore this email.</p>",
+			});
+		},
 		sendResetPassword: async ({ user, url }) => {
 			await sendEmail({
 				to: user.email,
