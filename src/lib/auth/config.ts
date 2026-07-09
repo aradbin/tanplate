@@ -3,7 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { db } from "@/lib/db";
-import { sendEmail } from "@/lib/email";
+import { renderEmail, sendEmail } from "@/lib/email";
 
 export const auth = betterAuth({
 	appName: "Tanplate",
@@ -32,21 +32,34 @@ export const auth = betterAuth({
 			void sendEmail({
 				to: user.email,
 				subject: "Sign-up attempt with your email",
-				html: "<p>Someone tried to create an account using your email address. If this was you, try signing in instead. If not, you can safely ignore this email.</p>",
+				...renderEmail({
+					heading: "Sign-up attempt with your email",
+					body: [
+						"Someone tried to create an account using your email address.",
+						"If this was you, try signing in instead. If not, you can safely ignore this email.",
+					],
+				}),
 			});
 		},
 		sendResetPassword: async ({ user, url }) => {
 			void sendEmail({
 				to: user.email,
 				subject: "Reset your password",
-				html: `<p>Click <a href="${url}">here</a> to reset your password.</p>`,
+				...renderEmail({
+					heading: "Reset your password",
+					body: "We received a request to reset your password. Click the button below to choose a new one. This link will expire shortly.",
+					action: { label: "Reset password", url },
+				}),
 			});
 		},
 		onPasswordReset: async ({ user }) => {
 			await sendEmail({
 				to: user.email,
 				subject: "Password reset successful",
-				html: `<p>Your password has been reset successfully.</p>`,
+				...renderEmail({
+					heading: "Password reset successful",
+					body: "Your password has been reset successfully. If you didn't make this change, please contact support right away.",
+				}),
 			});
 		},
 	},
@@ -57,7 +70,11 @@ export const auth = betterAuth({
 			void sendEmail({
 				to: user.email,
 				subject: "Verify your email",
-				html: `<p>Click <a href="${url}">here</a> to verify your email.</p>`,
+				...renderEmail({
+					heading: "Verify your email",
+					body: "Thanks for signing up! Please confirm your email address by clicking the button below to activate your account.",
+					action: { label: "Verify email", url },
+				}),
 			});
 		},
 	},
