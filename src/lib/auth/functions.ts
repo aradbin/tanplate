@@ -4,10 +4,15 @@ import type { AnyType } from "../types";
 import { authClient } from "./client";
 import { auth } from "./config";
 
+export function verificationCallbackURL(redirect?: string): string {
+	const params = new URLSearchParams({ verified: "true" });
+	if (redirect) params.set("redirect", redirect);
+	return `/login?${params.toString()}`;
+}
+
 export const signUp = async (value: {
 	name: string;
 	email: string;
-	phone?: string;
 	password: string;
 	callbackURL?: string;
 }) => {
@@ -36,6 +41,47 @@ export const signIn = async (value: { email: string; password: string }) => {
 		return {
 			...data,
 			message: "Login Successful",
+		};
+	}
+
+	const err = new Error(
+		error?.message || "Something went wrong. Please try again.",
+	);
+	// Preserve the HTTP status so callers can branch (e.g. 403 = email not verified).
+	(err as AnyType).status = error?.status;
+	throw err;
+};
+
+export const forgetPassword = async (value: { email: string }) => {
+	const { data, error } = await authClient.requestPasswordReset({
+		email: value.email,
+		redirectTo: "/password/reset",
+	});
+
+	if (data) {
+		return {
+			...data,
+			message:
+				"If an account exists, a reset link has been sent to your email.",
+		};
+	}
+
+	throw new Error(error?.message || "Something went wrong. Please try again.");
+};
+
+export const resetPassword = async (value: {
+	token: string;
+	newPassword: string;
+}) => {
+	const { data, error } = await authClient.resetPassword({
+		newPassword: value.newPassword,
+		token: value.token,
+	});
+
+	if (data) {
+		return {
+			...data,
+			message: "Password reset successfully",
 		};
 	}
 

@@ -17,6 +17,17 @@ export const auth = betterAuth({
 		minPasswordLength: 8,
 		requireEmailVerification: true,
 		revokeSessionsOnPasswordReset: true,
+		// Complete enumeration protection: the synthetic success response must
+		// include the admin plugin's user fields so it's indistinguishable from a
+		// real sign-up. Assemble in DB schema order (core -> admin fields -> id).
+		customSyntheticUser: ({ coreFields, id }) => ({
+			...coreFields,
+			role: "user",
+			banned: false,
+			banReason: null,
+			banExpires: null,
+			id,
+		}),
 		onExistingUserSignUp: async ({ user }) => {
 			void sendEmail({
 				to: user.email,
@@ -25,7 +36,7 @@ export const auth = betterAuth({
 			});
 		},
 		sendResetPassword: async ({ user, url }) => {
-			await sendEmail({
+			void sendEmail({
 				to: user.email,
 				subject: "Reset your password",
 				html: `<p>Click <a href="${url}">here</a> to reset your password.</p>`,
@@ -43,7 +54,7 @@ export const auth = betterAuth({
 		sendOnSignUp: true,
 		autoSignInAfterVerification: false,
 		async sendVerificationEmail({ user, url }) {
-			await sendEmail({
+			void sendEmail({
 				to: user.email,
 				subject: "Verify your email",
 				html: `<p>Click <a href="${url}">here</a> to verify your email.</p>`,

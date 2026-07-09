@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef } from "react";
 import FormComponent from "@/components/form/form-component";
-import { signUp } from "@/lib/auth/functions";
+import { signUp, verificationCallbackURL } from "@/lib/auth/functions";
 import type { FormFieldType } from "@/lib/types";
 import {
 	emailRequiredValidation,
@@ -10,7 +10,6 @@ import {
 	stringValidation,
 	validate,
 } from "@/lib/validations";
-import { useAuth } from "@/providers/auth-provider";
 
 export const Route = createFileRoute("/_auth/register/")({
 	validateSearch: validate({
@@ -22,7 +21,6 @@ export const Route = createFileRoute("/_auth/register/")({
 function RouteComponent() {
 	const { redirect } = Route.useSearch();
 	const navigate = Route.useNavigate();
-	const { refetch } = useAuth();
 	const emailRef = useRef<string>("");
 
 	const fields: FormFieldType[][] = [
@@ -56,18 +54,16 @@ function RouteComponent() {
 				fields={fields}
 				handleSubmit={(values: {
 					name: string;
-					phone?: string;
 					email: string;
 					password: string;
 				}) => {
 					emailRef.current = values.email;
 					return signUp({
 						...values,
-						callbackURL: redirect || "/organizations",
+						callbackURL: verificationCallbackURL(redirect),
 					});
 				}}
-				onSuccess={async () => {
-					await refetch();
+				onSuccess={() => {
 					navigate({
 						to: "/verify",
 						search: {
@@ -75,21 +71,6 @@ function RouteComponent() {
 							redirect,
 						},
 					});
-				}}
-				onError={(error: Error) => {
-					if (
-						error instanceof Error &&
-						error.message.toLowerCase().includes("user already exists")
-					) {
-						navigate({
-							to: "/verify",
-							search: {
-								email: emailRef.current,
-								exists: true,
-								redirect,
-							},
-						});
-					}
 				}}
 				options={{
 					submitText: "Register",

@@ -20,6 +20,8 @@ import { Route as AuthRegisterIndexRouteImport } from './routes/_auth/register/i
 import { Route as AuthLoginIndexRouteImport } from './routes/_auth/login/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as PrivateUsersEmailIndexRouteImport } from './routes/_private/users/$email/index'
+import { Route as AuthPasswordResetIndexRouteImport } from './routes/_auth/password/reset/index'
+import { Route as AuthPasswordForgotIndexRouteImport } from './routes/_auth/password/forgot/index'
 
 const PrivateRouteRoute = PrivateRouteRouteImport.update({
   id: '/_private',
@@ -74,6 +76,16 @@ const PrivateUsersEmailIndexRoute = PrivateUsersEmailIndexRouteImport.update({
   path: '/users/$email/',
   getParentRoute: () => PrivateRouteRoute,
 } as any)
+const AuthPasswordResetIndexRoute = AuthPasswordResetIndexRouteImport.update({
+  id: '/password/reset/',
+  path: '/password/reset/',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
+const AuthPasswordForgotIndexRoute = AuthPasswordForgotIndexRouteImport.update({
+  id: '/password/forgot/',
+  path: '/password/forgot/',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute
@@ -84,6 +96,8 @@ export interface FileRoutesByFullPath {
   '/profile/': typeof PrivateProfileIndexRoute
   '/tasks/': typeof PrivateTasksIndexRoute
   '/users/': typeof PrivateUsersIndexRoute
+  '/password/forgot/': typeof AuthPasswordForgotIndexRoute
+  '/password/reset/': typeof AuthPasswordResetIndexRoute
   '/users/$email/': typeof PrivateUsersEmailIndexRoute
 }
 export interface FileRoutesByTo {
@@ -95,6 +109,8 @@ export interface FileRoutesByTo {
   '/profile': typeof PrivateProfileIndexRoute
   '/tasks': typeof PrivateTasksIndexRoute
   '/users': typeof PrivateUsersIndexRoute
+  '/password/forgot': typeof AuthPasswordForgotIndexRoute
+  '/password/reset': typeof AuthPasswordResetIndexRoute
   '/users/$email': typeof PrivateUsersEmailIndexRoute
 }
 export interface FileRoutesById {
@@ -109,6 +125,8 @@ export interface FileRoutesById {
   '/_private/profile/': typeof PrivateProfileIndexRoute
   '/_private/tasks/': typeof PrivateTasksIndexRoute
   '/_private/users/': typeof PrivateUsersIndexRoute
+  '/_auth/password/forgot/': typeof AuthPasswordForgotIndexRoute
+  '/_auth/password/reset/': typeof AuthPasswordResetIndexRoute
   '/_private/users/$email/': typeof PrivateUsersEmailIndexRoute
 }
 export interface FileRouteTypes {
@@ -122,6 +140,8 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/tasks/'
     | '/users/'
+    | '/password/forgot/'
+    | '/password/reset/'
     | '/users/$email/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -133,6 +153,8 @@ export interface FileRouteTypes {
     | '/profile'
     | '/tasks'
     | '/users'
+    | '/password/forgot'
+    | '/password/reset'
     | '/users/$email'
   id:
     | '__root__'
@@ -146,6 +168,8 @@ export interface FileRouteTypes {
     | '/_private/profile/'
     | '/_private/tasks/'
     | '/_private/users/'
+    | '/_auth/password/forgot/'
+    | '/_auth/password/reset/'
     | '/_private/users/$email/'
   fileRoutesById: FileRoutesById
 }
@@ -234,6 +258,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateUsersEmailIndexRouteImport
       parentRoute: typeof PrivateRouteRoute
     }
+    '/_auth/password/reset/': {
+      id: '/_auth/password/reset/'
+      path: '/password/reset'
+      fullPath: '/password/reset/'
+      preLoaderRoute: typeof AuthPasswordResetIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/password/forgot/': {
+      id: '/_auth/password/forgot/'
+      path: '/password/forgot'
+      fullPath: '/password/forgot/'
+      preLoaderRoute: typeof AuthPasswordForgotIndexRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
   }
 }
 
@@ -241,12 +279,16 @@ interface AuthRouteRouteChildren {
   AuthLoginIndexRoute: typeof AuthLoginIndexRoute
   AuthRegisterIndexRoute: typeof AuthRegisterIndexRoute
   AuthVerifyIndexRoute: typeof AuthVerifyIndexRoute
+  AuthPasswordForgotIndexRoute: typeof AuthPasswordForgotIndexRoute
+  AuthPasswordResetIndexRoute: typeof AuthPasswordResetIndexRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthLoginIndexRoute: AuthLoginIndexRoute,
   AuthRegisterIndexRoute: AuthRegisterIndexRoute,
   AuthVerifyIndexRoute: AuthVerifyIndexRoute,
+  AuthPasswordForgotIndexRoute: AuthPasswordForgotIndexRoute,
+  AuthPasswordResetIndexRoute: AuthPasswordResetIndexRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(

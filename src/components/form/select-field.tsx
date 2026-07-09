@@ -133,8 +133,7 @@ export default function SelectField({ field }: { field: FormFieldType }) {
 							className={cn(
 								"w-full justify-between",
 								!field.value && "text-muted-foreground",
-								!field?.isValid &&
-									"border-destructive dark:border-destructive",
+								!field?.isValid && "border-destructive dark:border-destructive",
 							)}
 						>
 							<div className="flex items-center justify-start">

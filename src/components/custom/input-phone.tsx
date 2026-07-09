@@ -99,7 +99,10 @@ const CountrySelect = ({
 					/>
 				}
 			>
-				<FlagComponent country={selectedCountry} countryName={selectedCountry} />
+				<FlagComponent
+					country={selectedCountry}
+					countryName={selectedCountry}
+				/>
 				<ChevronsUpDown
 					className={cn(
 						"-mr-2 size-4 opacity-50",

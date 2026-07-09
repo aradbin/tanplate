@@ -42,14 +42,11 @@ export const stringRequiredValidation = (
 };
 
 export const booleanValidation = (key: string) => {
-	return z.preprocess(
-		(val) => {
-			if (val === "true" || val === true) return true;
-			if (val === "false" || val === false) return false;
-			return undefined;
-		},
-		z.boolean({ error: `${key} has to be true or false` }).optional(),
-	);
+	return z.preprocess((val) => {
+		if (val === "true" || val === true) return true;
+		if (val === "false" || val === false) return false;
+		return undefined;
+	}, z.boolean({ error: `${key} has to be true or false` }).optional());
 };
 
 export const stringNumberValidation = (

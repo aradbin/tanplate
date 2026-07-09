@@ -256,9 +256,7 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 							>
 								{virtualizer.getVirtualItems().map((virtualItem) => {
 									const option = filteredOptions[virtualItem.index];
-									const isSelected = selectedValues.includes(
-										String(option.id),
-									);
+									const isSelected = selectedValues.includes(String(option.id));
 									return (
 										<CommandItem
 											key={option.id}

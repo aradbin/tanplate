@@ -19,8 +19,7 @@ export default function UserForm({
 }) {
 	const { data, isLoading } = useQuery({
 		queryKey: ["user", modal?.id],
-		queryFn: () =>
-			getUser({ data: { where: { id: modal?.id } } }),
+		queryFn: () => getUser({ data: { where: { id: modal?.id } } }),
 		enabled: !!modal?.id && modal?.isOpen,
 	});
 

@@ -1,8 +1,21 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Outlet,
+	redirect,
+	useLocation,
+} from "@tanstack/react-router";
 import { ShieldUser } from "lucide-react";
 import FullPageComponent from "@/components/app/full-page-component";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+
+const titles: Record<string, string> = {
+	"/login": "Login",
+	"/register": "Register",
+	"/verify": "Verify Email",
+	"/password/forgot": "Forgot Password",
+	"/password/reset": "Reset Password",
+};
 
 export const Route = createFileRoute("/_auth")({
 	beforeLoad: ({ context }) => {
@@ -16,6 +29,9 @@ export const Route = createFileRoute("/_auth")({
 });
 
 function RouteComponent() {
+	const { pathname } = useLocation();
+	const title = titles[pathname] ?? "Login";
+
 	return (
 		<FullPageComponent>
 			<Card>
@@ -24,7 +40,7 @@ function RouteComponent() {
 						<div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
 							<ShieldUser className="size-4" />
 						</div>
-						Login
+						{title}
 					</CardTitle>
 				</CardHeader>
 				<Separator />

@@ -12,8 +12,8 @@ import {
 	EmptyTitle,
 } from "@/components/ui/empty";
 import { authClient } from "@/lib/auth/client";
+import { verificationCallbackURL } from "@/lib/auth/functions";
 import {
-	booleanValidation,
 	emailRequiredValidation,
 	stringValidation,
 	validate,
@@ -22,7 +22,6 @@ import {
 export const Route = createFileRoute("/_auth/verify/")({
 	validateSearch: validate({
 		email: emailRequiredValidation("Email").catch(""),
-		exists: booleanValidation("Exists").catch(undefined),
 		redirect: stringValidation("Redirect", Infinity).catch(undefined),
 	}),
 	beforeLoad: async ({ search }) => {
@@ -36,7 +35,7 @@ export const Route = createFileRoute("/_auth/verify/")({
 });
 
 function RouteComponent() {
-	const { email, exists, redirect: redirectTo } = Route.useSearch();
+	const { email, redirect: redirectTo } = Route.useSearch();
 	const [isResending, setIsResending] = useState(false);
 	const [cooldown, setCooldown] = useState(0);
 
@@ -50,7 +49,7 @@ function RouteComponent() {
 			}
 			const { error } = await authClient.sendVerificationEmail({
 				email,
-				callbackURL: redirectTo || "/organizations",
+				callbackURL: verificationCallbackURL(redirectTo),
 			});
 			if (error) {
 				throw new Error(error.message);
@@ -85,9 +84,7 @@ function RouteComponent() {
 				</EmptyMedia>
 				<EmptyTitle>Check your email</EmptyTitle>
 				<EmptyDescription>
-					{!exists
-						? "We sent a verification link to"
-						: "An account with this email already exists. If you haven't verified yet, resend the verification link to"}{" "}
+					We sent a verification link to{" "}
 					<span className="font-medium text-foreground">{email}</span>
 				</EmptyDescription>
 			</EmptyHeader>
