@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 
 export const auth = betterAuth({
-	appName: "12iD",
+	appName: "Tanplate",
 	database: drizzleAdapter(db, {
 		provider: "pg",
 	}),
