@@ -7,10 +7,7 @@ const SMTP_USER = process.env.SMTP_USER as string;
 const BASE_URL = process.env.VITE_BASE_URL as string;
 
 const transporter = nodemailer.createTransport({
-	host: "smtp.gmail.com",
-	port: 465,
-	secure: true,
-	pool: true,
+	service: "gmail",
 	auth: {
 		user: SMTP_USER,
 		pass: process.env.SMTP_PASS,
