@@ -6,7 +6,7 @@ import {
 	dbQueryBuilder,
 	dbUpdateBuilder,
 } from "@/lib/db/functions";
-import type { NewTask, Task, User } from "@/lib/db/schema";
+import type { Task, User } from "@/lib/db/schema";
 import type { QueryInputType, QueryParamType } from "@/lib/db/types";
 import {
 	stringRequiredValidation,
@@ -91,7 +91,7 @@ export const createTask = createServerFn({ method: "POST" })
 			data: { table: "tasks", values: data },
 		});
 
-		return row as NewTask;
+		return row as Task;
 	});
 
 export const updateTask = createServerFn({ method: "POST" })
@@ -106,7 +106,7 @@ export const updateTask = createServerFn({ method: "POST" })
 	});
 
 export const deleteTask = createServerFn({ method: "POST" })
-	.validator((data: { id: string }) => data)
+	.validator(validate({ id: stringRequiredValidation("Id") }))
 	.handler(async ({ data }) => {
 		const [row] = await dbDeleteBuilder({
 			data: { table: "tasks", where: { id: data.id } },

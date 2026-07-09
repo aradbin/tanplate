@@ -99,7 +99,7 @@ export default function TaskForm({
 						modal?.isOpen && modal?.id && data
 							? {
 									...data,
-									userId: user?.id,
+									userId: data.userId ?? user?.id,
 								}
 							: {
 									userId: user?.id,

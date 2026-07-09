@@ -158,7 +158,6 @@ const insertBuilder: DbInsertBuilder = (
 		id: v.id ?? generateId(),
 		...v,
 		...(userId ? { createdBy: userId } : {}),
-		createdAt: new Date(),
 	}));
 
 	return client.insert(t).values(rows).returning() as AnyType;
