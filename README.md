@@ -125,7 +125,7 @@ string in [query-provider.tsx](src/providers/query-provider.tsx) to invalidate a
 ## The generic data layer
 
 Instead of hand-writing SQL or per-table CRUD, all data access flows through **five table-generic
-server functions** in [src/lib/db/functions.ts](src/lib/db/functions.ts):
+server-only builders** in [src/lib/db/functions.ts](src/lib/db/functions.ts):
 
 | Builder | Operation |
 | --- | --- |
@@ -135,9 +135,15 @@ server functions** in [src/lib/db/functions.ts](src/lib/db/functions.ts):
 | `dbUpdateBuilder` | Update — injects `updatedBy` (`updatedAt` auto-set by the schema) |
 | `dbDeleteBuilder` | **Soft delete** — sets `deletedAt` / `deletedBy` instead of removing the row |
 
-Each builder is composed in three layers: (1) a pure builder returning an un-awaited Drizzle query,
-(2) a `createServerOnlyFn` guard, and (3) a `createServerFn` wrapped with `authMiddleware`
-([src/lib/auth/middleware.ts](src/lib/auth/middleware.ts)) that injects the authenticated user.
+Each builder is composed in two layers: (1) a pure builder returning an un-awaited Drizzle query,
+and (2) a `createServerOnlyFn` guard (the exported builder). These are **`createServerOnlyFn`, not
+`createServerFn`** — server-only helpers called only from inside feature server functions' handlers,
+never from the client. Do **not** wrap them in `createServerFn` or call one server function from
+inside another: a nested server fn leaks a reference into the SSR hydration payload with no client
+stub, causing "Server function info not found" in production builds. Auth lives on the feature
+server functions (`.middleware([authMiddleware])`,
+[src/lib/auth/middleware.ts](src/lib/auth/middleware.ts)), which pass `context.user.id` into the
+builders for the `createdBy`/`updatedBy`/`deletedBy` audit fields.
 
 **Shared behavior** (baked into `dbWhereBuilder`):
 

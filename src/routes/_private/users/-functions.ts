@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { auth } from "@/lib/auth/config";
+import { authMiddleware } from "@/lib/auth/middleware";
 import { dbCountBuilder, dbQueryBuilder } from "@/lib/db/functions";
 import type { User } from "@/lib/db/schema";
 import type { QueryInputType, QueryParamType } from "@/lib/db/types";
@@ -41,29 +42,27 @@ function buildUserQuery(data: QueryInputType): QueryParamType<"user"> {
 }
 
 export const getUsers = createServerFn()
+	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(
-		async ({ data }) =>
-			(await dbQueryBuilder({
-				data: { params: buildUserQuery(data) },
-			})) as User[],
+		async ({ data }) => (await dbQueryBuilder(buildUserQuery(data))) as User[],
 	);
 
 export const getUser = createServerFn()
+	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(
 		async ({ data }) =>
-			(await dbQueryBuilder({
-				data: { params: buildUserQuery(data), first: true },
+			(await dbQueryBuilder(buildUserQuery(data), {
+				first: true,
 			})) as User | undefined,
 	);
 
 export const getUserCount = createServerFn()
+	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(async ({ data }) => {
-		const [{ count }] = await dbCountBuilder({
-			data: { params: buildUserQuery(data) },
-		});
+		const [{ count }] = await dbCountBuilder(buildUserQuery(data));
 
 		return count;
 	});

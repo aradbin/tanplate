@@ -45,20 +45,29 @@ The root [__root.tsx](src/routes/__root.tsx) resolves the current user in `befor
 read `context.user`. Provider nesting: Theme → Query → Tooltip → Auth.
 
 ### The generic DB builder layer — read before touching data access
-[src/lib/db/functions.ts](src/lib/db/functions.ts) exposes five **table-generic** server functions —
+[src/lib/db/functions.ts](src/lib/db/functions.ts) exposes five **table-generic** builders —
 `dbQueryBuilder`, `dbCountBuilder`, `dbInsertBuilder`, `dbUpdateBuilder`, `dbDeleteBuilder` — that
-replace per-table CRUD. Each is built in three layers:
+replace per-table CRUD. Each is built in two layers:
 1. a pure builder that returns an un-awaited Drizzle query,
-2. a `createServerOnlyFn` guard,
-3. a `createServerFn` wrapped with `authMiddleware` ([src/lib/auth/middleware.ts](src/lib/auth/middleware.ts)), which injects the authed user (`createdBy` on insert, `updatedBy` on update, `deletedBy` on delete).
+2. a `createServerOnlyFn` guard (the exported builder).
+
+These are **`createServerOnlyFn`, not `createServerFn`** — server-only helpers, *not* RPC server
+functions. They are called **only from inside feature server functions' handlers**, never from the
+client. (Do not wrap them in `createServerFn` or call one server function from inside another: a
+nested server fn leaks a reference into the SSR hydration payload for which no client stub exists,
+causing "Server function info not found" in production builds.) Insert/update/delete take a `userId`
+argument passed from the caller's authed context, becoming `createdBy`/`updatedBy`/`deletedBy`.
+
+Auth lives on the **feature** server functions: each carries `.middleware([authMiddleware])`
+([src/lib/auth/middleware.ts](src/lib/auth/middleware.ts)) and passes `context.user.id` into the builders.
 
 Shared behavior baked into `dbWhereBuilder`:
 - **Soft delete** — tables with a `deletedAt` column are automatically filtered to non-deleted rows, and `dbDeleteBuilder` sets `deletedAt`/`deletedBy` instead of deleting.
 - `where` filters, `ilike` search across chosen keys, sort (defaults to `desc(createdAt)`), and offset pagination (`defaultPageSize` = 30).
 
 Feature `-functions.ts` files (e.g. [tasks/-functions.ts](src/routes/_private/tasks/-functions.ts))
-do **not** write SQL. They build a typed `QueryParamType` (table name + `with` relations + search
-keys + where) and delegate to the generic builders. Types for all this live in
+do **not** write SQL. They are `createServerFn` + `authMiddleware`, build a typed `QueryParamType`
+(table name + `with` relations + search keys + where) and delegate to the server-only builders. Types for all this live in
 [src/lib/db/types.ts](src/lib/db/types.ts), which derives `TableType`, column keys, etc. from the
 Drizzle schema so `where`/`sort`/`search` keys are checked against real columns.
 
@@ -105,7 +114,7 @@ The `tasks` module in [src/routes/_private/tasks/](src/routes/_private/tasks/) i
 end-to-end CRUD example. To add a new entity, mirror these files:
 
 1. **Schema** — add `src/lib/db/schema/<entity>.ts` (`pgTable` + spread `...timestamps`), export `$inferSelect`/`$inferInsert` types, re-export from [schema/index.ts](src/lib/db/schema/index.ts), wire relations in `relations.ts`, then `pnpm db:generate && pnpm db:migrate` (or `db:push` in dev). The new table name becomes a valid `TableType` automatically.
-2. **`-functions.ts`** — no raw SQL. Define zod validators with `validate({...})`, a `build<Entity>Query(data: QueryInputType): QueryParamType<"<entity>">` helper (relations via `with`, search `key`s, `where`), then thin server fns that delegate to the generic builders: `get<Entities>` → `dbQueryBuilder`, `get<Entity>` → `dbQueryBuilder` with `first: true`, `get<Entity>Count` → `dbCountBuilder`, `create<Entity>` → `dbInsertBuilder`, `update<Entity>` → `dbUpdateBuilder`, `delete<Entity>` → `dbDeleteBuilder`. See [tasks/-functions.ts](src/routes/_private/tasks/-functions.ts).
+2. **`-functions.ts`** — no raw SQL. Define zod validators with `validate({...})`, a `build<Entity>Query(data: QueryInputType): QueryParamType<"<entity>">` helper (relations via `with`, search `key`s, `where`), then thin `createServerFn` + `.middleware([authMiddleware])` server fns that delegate to the server-only builders: `get<Entities>` → `dbQueryBuilder(build<Entity>Query(data))`, `get<Entity>` → `dbQueryBuilder(build<Entity>Query(data), { first: true })`, `get<Entity>Count` → `dbCountBuilder(...)`, `create<Entity>` → `dbInsertBuilder({ table, values: data, userId: context.user.id })`, `update<Entity>` → `dbUpdateBuilder({ table, values, where: { id }, userId: context.user.id })`, `delete<Entity>` → `dbDeleteBuilder({ table, where: { id }, userId: context.user.id })`. Call the builders directly — never wrap them in `createServerFn`. See [tasks/-functions.ts](src/routes/_private/tasks/-functions.ts).
 3. **`-columns.tsx`** — export `<entity>Columns({ actions }): ColumnDef<...>[]`; use `TableColumnHeader` for headers and `TableRowActions` (fed `actions`) for the row action cell. See [tasks/-columns.tsx](src/routes/_private/tasks/-columns.tsx).
 4. **`-form.tsx`** — a `ModalComponent` (variant `sheet`) wrapping `FormComponent`; declare `FormFieldType[][]` (rows of fields) with per-field `validationOnSubmit`, load the edit record with `useQuery` keyed on `modal.id`, and branch `handleSubmit` between create/update. See [tasks/-form.tsx](src/routes/_private/tasks/-form.tsx).
 5. **`index.tsx`** — `createFileRoute` with `validateSearch` (spread `defaultSearchParamValidation`, add entity-specific `sort`/filter enums), build a `QueryInputType` from `Route.useSearch()`, and render `<TableComponent entity=... columns=... queryFn=... queryCountFn=... />`. Wire create/edit via `openModal(<Entity>Form, ...)` and delete via `setDeleteModal({ table, fn })` from `useApp()`. See [tasks/index.tsx](src/routes/_private/tasks/index.tsx).

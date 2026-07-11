@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { authMiddleware } from "@/lib/auth/middleware";
 import {
 	dbCountBuilder,
 	dbDeleteBuilder,
@@ -59,57 +60,66 @@ function buildTaskQuery(data: QueryInputType): QueryParamType<"tasks"> {
 }
 
 export const getTasks = createServerFn()
+	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(async ({ data }) => {
-		return (await dbQueryBuilder({
-			data: { params: buildTaskQuery(data) },
-		})) as TaskWithUser[];
+		return (await dbQueryBuilder(buildTaskQuery(data))) as TaskWithUser[];
 	});
 
 export const getTask = createServerFn()
+	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(async ({ data }) => {
-		return (await dbQueryBuilder({
-			data: { params: buildTaskQuery(data), first: true },
+		return (await dbQueryBuilder(buildTaskQuery(data), {
+			first: true,
 		})) as TaskWithUser | undefined;
 	});
 
 export const getTaskCount = createServerFn()
+	.middleware([authMiddleware])
 	.validator((data: QueryInputType) => data)
 	.handler(async ({ data }) => {
-		const [{ count }] = await dbCountBuilder({
-			data: { params: buildTaskQuery(data) },
-		});
+		const [{ count }] = await dbCountBuilder(buildTaskQuery(data));
 
 		return count;
 	});
 
 export const createTask = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
 	.validator(createTaskValidator)
-	.handler(async ({ data }) => {
+	.handler(async ({ data, context }) => {
 		const [row] = await dbInsertBuilder({
-			data: { table: "tasks", values: data },
+			table: "tasks",
+			values: data,
+			userId: context.user.id,
 		});
 
 		return row as Task;
 	});
 
 export const updateTask = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
 	.validator(updateTaskValidator)
-	.handler(async ({ data }) => {
+	.handler(async ({ data, context }) => {
 		const { id, ...values } = data;
 		const [row] = await dbUpdateBuilder({
-			data: { table: "tasks", values, where: { id } },
+			table: "tasks",
+			values,
+			where: { id },
+			userId: context.user.id,
 		});
 
 		return row as Task;
 	});
 
 export const deleteTask = createServerFn({ method: "POST" })
+	.middleware([authMiddleware])
 	.validator(validate({ id: stringRequiredValidation("Id") }))
-	.handler(async ({ data }) => {
+	.handler(async ({ data, context }) => {
 		const [row] = await dbDeleteBuilder({
-			data: { table: "tasks", where: { id: data.id } },
+			table: "tasks",
+			where: { id: data.id },
+			userId: context.user.id,
 		});
 
 		return row as Task;

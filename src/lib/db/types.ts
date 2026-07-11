@@ -112,9 +112,12 @@ export type InsertType<T extends TableType> = (typeof schema)[T] extends {
 	: never;
 
 // Everything the insert builder needs comes as props; userId becomes createdBy.
+// `values` is Partial because the builder fills the primary-key `id` itself and
+// callers validate their own required fields (feature validators); the DB still
+// enforces NOT NULL columns at runtime.
 export interface InsertParams<T extends TableType> {
 	table: T;
-	values: InsertType<T> | InsertType<T>[];
+	values: Partial<InsertType<T>> | Partial<InsertType<T>>[];
 	userId?: string;
 }
 

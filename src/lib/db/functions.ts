@@ -1,4 +1,4 @@
-import { createServerFn, createServerOnlyFn } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { generateId } from "better-auth";
 import {
 	and,
@@ -11,7 +11,6 @@ import {
 	or,
 	type SQL,
 } from "drizzle-orm";
-import { authMiddleware } from "@/lib/auth/middleware";
 import type { AnyType } from "@/lib/types";
 import { defaultPageSize } from "@/lib/variables";
 import { db } from ".";
@@ -103,19 +102,10 @@ const queryBuilder = ((
 	} as AnyType) as AnyType;
 }) as DbQueryBuilder;
 
-// Layer 2: server-only guard (mirrors dbInsertBuilderFn).
-export const dbQueryBuilderFn = createServerOnlyFn(queryBuilder);
-
-// Layer 3: generic query server fn. Auth runs via middleware so list/detail
-// callers don't repeat it; params flow straight through to the builder.
-export const dbQueryBuilder = createServerFn()
-	.middleware([authMiddleware])
-	.validator((data: { params: QueryParamType; first?: boolean }) => data)
-	.handler(async ({ data }) => {
-		return data.first
-			? await dbQueryBuilderFn(data.params, { first: true })
-			: await dbQueryBuilderFn(data.params);
-	});
+// Server-only query builder. Feature server functions call this directly (they
+// carry authMiddleware themselves). It is NOT an RPC server fn, so it is never
+// serialized into the SSR payload or registered on the client.
+export const dbQueryBuilder = createServerOnlyFn(queryBuilder);
 
 // Returns an un-awaited count query using the same WHERE (no sort/pagination).
 const countBuilder: DbCountBuilder = (
@@ -133,17 +123,8 @@ const countBuilder: DbCountBuilder = (
 		.where(where.length ? and(...where) : undefined) as AnyType;
 };
 
-// Layer 2: server-only guard (mirrors dbQueryBuilderFn).
-export const dbCountBuilderFn = createServerOnlyFn(countBuilder);
-
-// Layer 3: generic count server fn. Same auth-via-middleware wrapper as
-// dbQueryBuilder; params flow straight through to the count builder.
-export const dbCountBuilder = createServerFn()
-	.middleware([authMiddleware])
-	.validator((data: { params: QueryParamType }) => data)
-	.handler(async ({ data }) => {
-		return await dbCountBuilderFn(data.params);
-	});
+// Server-only count builder (same soft-delete/where semantics as dbQueryBuilder).
+export const dbCountBuilder = createServerOnlyFn(countBuilder);
 
 // Layer 1: everything comes as props; returns the un-awaited insert query.
 // Injects a generated id and (when provided) createdBy on each row.
@@ -163,21 +144,9 @@ const insertBuilder: DbInsertBuilder = (
 	return client.insert(t).values(rows).returning() as AnyType;
 };
 
-// Layer 2: server-only guard (mirrors dbQueryBuilder).
-export const dbInsertBuilderFn = createServerOnlyFn(insertBuilder);
-
-// Layer 3: generic insert server fn. Auth runs via middleware; the payload is
-// prepared here (createdBy from the authed user) before awaiting the builder.
-export const dbInsertBuilder = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
-	.validator((data: { table: TableType; values: AnyType }) => data)
-	.handler(async ({ data, context }) => {
-		return await dbInsertBuilderFn({
-			table: data.table,
-			values: data.values,
-			userId: context.user.id,
-		});
-	});
+// Server-only insert builder. Callers pass userId (from their authed context)
+// so createdBy is stamped.
+export const dbInsertBuilder = createServerOnlyFn(insertBuilder);
 
 // Layer 1: everything comes as props; returns the un-awaited update query.
 // Injects (when provided) updatedBy; `updatedAt` is set automatically by the
@@ -200,39 +169,30 @@ const updateBuilder: DbUpdateBuilder = (
 		.returning() as AnyType;
 };
 
-// Layer 2: server-only guard (mirrors dbInsertBuilderFn).
-export const dbUpdateBuilderFn = createServerOnlyFn(updateBuilder);
+// Server-only update builder. Callers pass userId so updatedBy is stamped.
+export const dbUpdateBuilder = createServerOnlyFn(updateBuilder);
 
-// Layer 3: generic update server fn. Auth runs via middleware; the payload is
-// prepared here (updatedBy from the authed user) before awaiting the builder.
-export const dbUpdateBuilder = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
-	.validator(
-		(data: { table: TableType; values: AnyType; where: AnyType }) => data,
-	)
-	.handler(async ({ data, context }) => {
-		return await dbUpdateBuilderFn({
-			table: data.table,
-			values: data.values,
-			where: data.where,
-			userId: context.user.id,
-		});
-	});
-
-// Generic soft-delete server fn. Mirrors dbUpdateBuilder: auth runs via
-// middleware, and the soft-delete values (deletedAt + deletedBy from the authed
-// user) are derived here, then applied by reusing dbUpdateBuilderFn. `where`
-// flows through dbWhereBuilder just like the update path.
-export const dbDeleteBuilder = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
-	.validator((data: { table: TableType; where: AnyType }) => data)
-	.handler(async ({ data, context }) => {
-		return await dbUpdateBuilderFn({
-			table: data.table,
-			values: {
-				deletedAt: new Date().toISOString(),
-				deletedBy: context.user.id,
+// Server-only soft-delete builder. Sets deletedAt/deletedBy (from the caller's
+// userId) instead of removing the row, reusing dbUpdateBuilder so the soft-delete
+// guard in dbWhereBuilder applies just like the update path.
+export const dbDeleteBuilder = createServerOnlyFn(
+	(
+		{
+			table,
+			where,
+			userId,
+		}: { table: TableType; where: AnyType; userId?: string },
+		options: BuilderOptions = {},
+	) =>
+		dbUpdateBuilder(
+			{
+				table,
+				values: {
+					deletedAt: new Date().toISOString(),
+					deletedBy: userId,
+				},
+				where,
 			},
-			where: data.where,
-		});
-	});
+			options,
+		),
+);
