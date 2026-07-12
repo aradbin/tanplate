@@ -25,7 +25,7 @@ export const Route = createRootRouteWithContext<{
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "Tenplate | Tanstack Start Template",
+				title: "Tanplate | Tanstack Start Template",
 			},
 		],
 		links: [
