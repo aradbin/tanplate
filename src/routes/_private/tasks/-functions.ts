@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { authMiddleware } from "@/lib/auth/middleware";
+import { authMiddleware } from "@/lib/auth/middlewares";
 import {
 	dbCountBuilder,
 	dbDeleteBuilder,

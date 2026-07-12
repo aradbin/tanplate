@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PlusCircle } from "lucide-react";
 import TableComponent from "@/components/table/table-component";
 import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/lib/auth/hooks";
+import { roleOptions } from "@/lib/auth/permissions";
 import type { QueryInputType } from "@/lib/db/types";
 import {
 	booleanValidation,
@@ -9,7 +11,7 @@ import {
 	enamValidation,
 	validate,
 } from "@/lib/validations";
-import { booleanOptions, roleOptions } from "@/lib/variables";
+import { booleanOptions } from "@/lib/variables";
 import { useApp } from "@/providers/app-provider";
 import { userColumns } from "./-columns";
 import UserForm from "./-form";
@@ -30,6 +32,7 @@ export const Route = createFileRoute("/_private/users/")({
 function RouteComponent() {
 	const search = Route.useSearch();
 	const { openModal, setDeleteModal } = useApp();
+	const { hasPermission } = usePermissions();
 
 	const query: QueryInputType = {
 		pagination: { page: search.page, pageSize: search.pageSize },
@@ -46,17 +49,21 @@ function RouteComponent() {
 			entity="user"
 			columns={userColumns({
 				actions: {
-					edit: (id) => openModal(UserForm, { id }),
+					edit: hasPermission({ user: ["update"] })
+						? (id) => openModal(UserForm, { id })
+						: undefined,
 				},
-				ban: (id, item) =>
-					setDeleteModal({
-						id,
-						title: "User",
-						table: "user",
-						action: item.banned ? "Unban" : "Ban",
-						submitVariant: item.banned ? "default" : "destructive",
-						fn: item.banned ? unbanUser : banUser,
-					}),
+				ban: hasPermission({ user: ["ban"] })
+					? (id, item) =>
+							setDeleteModal({
+								id,
+								title: "User",
+								table: "user",
+								action: item.banned ? "Unban" : "Ban",
+								submitVariant: item.banned ? "default" : "destructive",
+								fn: item.banned ? unbanUser : banUser,
+							})
+					: undefined,
 			})}
 			query={query}
 			filters={[
@@ -77,9 +84,11 @@ function RouteComponent() {
 				hasSearch: true,
 			}}
 			toolbar={
-				<Button onClick={() => openModal(UserForm)}>
-					<PlusCircle /> Create
-				</Button>
+				hasPermission({ user: ["create"] }) && (
+					<Button onClick={() => openModal(UserForm)}>
+						<PlusCircle /> Create
+					</Button>
+				)
 			}
 		/>
 	);

@@ -59,6 +59,7 @@ export const userColumns = ({
 		),
 		cell: ({ row }) => {
 			if (row.original.role === "owner") return null;
+			console.log("ban", ban);
 			return (
 				<div className="flex justify-end gap-1">
 					<TableRowActions row={row} actions={actions} />

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { z } from "zod/v4";
 import { auth } from "@/lib/auth/config";
-import { authMiddleware } from "@/lib/auth/middleware";
+import { authMiddleware } from "@/lib/auth/middlewares";
 import { dbCountBuilder, dbQueryBuilder } from "@/lib/db/functions";
 import type { User } from "@/lib/db/schema";
 import type { QueryInputType, QueryParamType } from "@/lib/db/types";

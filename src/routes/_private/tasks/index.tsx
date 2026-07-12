@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PlusCircle } from "lucide-react";
 import TableComponent from "@/components/table/table-component";
 import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/lib/auth/hooks";
 import type { QueryInputType } from "@/lib/db/types";
 import {
 	defaultSearchParamValidation,
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/_private/tasks/")({
 function RouteComponent() {
 	const search = Route.useSearch();
 	const { openModal, setDeleteModal } = useApp();
+	const { hasPermission } = usePermissions();
 
 	const query: QueryInputType = {
 		pagination: { page: search.page, pageSize: search.pageSize },
@@ -45,14 +47,18 @@ function RouteComponent() {
 			entity="tasks"
 			columns={taskColumns({
 				actions: {
-					edit: (id) => openModal(TaskForm, { id }),
-					delete: (id) =>
-						setDeleteModal({
-							id,
-							title: "Task",
-							table: "tasks",
-							fn: deleteTask,
-						}),
+					edit: hasPermission({ task: ["update"] })
+						? (id) => openModal(TaskForm, { id })
+						: undefined,
+					delete: hasPermission({ task: ["delete"] })
+						? (id) =>
+								setDeleteModal({
+									id,
+									title: "Task",
+									table: "tasks",
+									fn: deleteTask,
+								})
+						: undefined,
 				},
 			})}
 			query={query}
@@ -69,9 +75,11 @@ function RouteComponent() {
 				hasSearch: true,
 			}}
 			toolbar={
-				<Button onClick={() => openModal(TaskForm)}>
-					<PlusCircle /> Create
-				</Button>
+				hasPermission({ task: ["create"] }) && (
+					<Button onClick={() => openModal(TaskForm)}>
+						<PlusCircle /> Create
+					</Button>
+				)
 			}
 		/>
 	);

@@ -1,13 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import ModalComponent from "@/components/common/modal-component";
 import FormComponent from "@/components/form/form-component";
+import { roleOptions } from "@/lib/auth/permissions";
 import type { AnyType, FormFieldType, ModalStateType } from "@/lib/types";
 import {
 	emailRequiredValidation,
 	passwordRequiredValidation,
 	stringRequiredValidation,
 } from "@/lib/validations";
-import { roleOptions } from "@/lib/variables";
 import { createUser, getUser, updateUser } from "./-functions";
 
 export default function UserForm({

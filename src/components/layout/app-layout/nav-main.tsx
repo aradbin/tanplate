@@ -16,11 +16,22 @@ import {
 	SidebarMenuSub,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { usePermissions } from "@/lib/auth/hooks";
 import type { NavItemType } from "@/lib/types";
 import { mainNavItems } from "./nav-items";
 
 export function NavMain() {
 	const { openMobile, setOpenMobile } = useSidebar();
+	const { hasPermission } = usePermissions();
+
+	const groups = mainNavItems()
+		.map((group) => ({
+			...group,
+			items: group.items?.filter(
+				(item) => !item.permission || hasPermission(item.permission),
+			),
+		}))
+		.filter((group) => group.items?.length);
 
 	const renderMenuItem = (item: NavItemType, titleLength = 25) => {
 		if (item?.items?.length) {
@@ -73,7 +84,7 @@ export function NavMain() {
 
 	return (
 		<>
-			{mainNavItems()?.map((group, index) => (
+			{groups?.map((group, index) => (
 				<SidebarGroup key={`${group?.title}-${index}`} className="px-2 py-0">
 					{group?.title && (
 						<SidebarGroupLabel>{group?.title}</SidebarGroupLabel>

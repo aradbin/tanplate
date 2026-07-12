@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { ComponentType, ReactElement } from "react";
+import type { PermissionCheck } from "@/lib/auth/permissions";
 
 // biome-ignore lint/suspicious/noExplicitAny: needed for generic type handling
 export type AnyType = any;
@@ -10,6 +11,7 @@ export interface NavItemType {
 	label?: string;
 	icon?: LucideIcon | null;
 	items?: NavItemType[];
+	permission?: PermissionCheck;
 }
 
 export interface NavigationType {

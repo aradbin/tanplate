@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+import { ac, roles } from "@/lib/auth/permissions";
 import { db } from "@/lib/db";
 import { renderEmail, sendEmail } from "@/lib/email";
 import { env } from "@/lib/env";
@@ -12,7 +13,7 @@ export const auth = betterAuth({
 		provider: "pg",
 	}),
 	baseURL: env.VITE_BASE_URL,
-	plugins: [admin(), tanstackStartCookies()], // make sure tanstackStartCookies is the last plugin in the array
+	plugins: [admin({ ac, roles }), tanstackStartCookies()], // make sure tanstackStartCookies is the last plugin in the array
 	emailAndPassword: {
 		enabled: true,
 		minPasswordLength: 8,
