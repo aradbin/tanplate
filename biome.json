@@ -46,6 +46,15 @@
 			}
 		},
 		{
+			"includes": ["src/lib/db/drizzle/**"],
+			"linter": {
+				"enabled": false
+			},
+			"formatter": {
+				"enabled": false
+			}
+		},
+		{
 			"includes": ["src/style.css"],
 			"linter": {
 				"enabled": false

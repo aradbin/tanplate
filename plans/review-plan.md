@@ -292,7 +292,7 @@ sendEmail({ ... }).catch(() => {});
 
 ---
 
-# Phase 4 — UX/DX consistency (detailed)
+# Phase 4 — UX/DX consistency (detailed) - Done
 
 ## Step 1 — Default success toast in FormComponent
 
@@ -324,7 +324,7 @@ Create/edit/delete a task → success toasts appear; login still shows its speci
 
 ---
 
-# Phase 5 — Tests + CI (detailed)
+# Phase 5 — Tests + CI (detailed) - Done
 
 ## Step 1 — Vitest wiring
 
