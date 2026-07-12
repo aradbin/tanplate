@@ -8,6 +8,7 @@ import TableComponent from "@/components/table/table-component";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePermissions } from "@/lib/auth/hooks";
 import type { QueryInputType } from "@/lib/db/types";
 import { capitalize } from "@/lib/utils";
 import { useApp } from "@/providers/app-provider";
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/_private/users/$email/")({
 function RouteComponent() {
 	const { email } = Route.useParams();
 	const { openModal, setDeleteModal } = useApp();
+	const { hasPermission } = usePermissions();
 
 	const { data, isLoading } = useQuery({
 		queryKey: ["user", email],
@@ -69,33 +71,37 @@ function RouteComponent() {
 				}}
 				footer={
 					<div className="flex gap-1 absolute top-0 right-3">
-						<Button
-							variant="outline"
-							size="icon"
-							onClick={() =>
-								openModal(UserForm, {
-									id: data?.id,
-								})
-							}
-						>
-							<Edit />
-						</Button>
-						<Button
-							variant={data.banned ? "default" : "destructive"}
-							size="icon"
-							onClick={() =>
-								setDeleteModal({
-									id: data.id,
-									title: "User",
-									table: "user",
-									action: data.banned ? "Unban" : "Ban",
-									submitVariant: data.banned ? "default" : "destructive",
-									fn: data.banned ? unbanUser : banUser,
-								})
-							}
-						>
-							<Ban />
-						</Button>
+						{hasPermission({ user: ["update"] }) && (
+							<Button
+								variant="outline"
+								size="icon"
+								onClick={() =>
+									openModal(UserForm, {
+										id: data?.id,
+									})
+								}
+							>
+								<Edit />
+							</Button>
+						)}
+						{hasPermission({ user: ["ban"] }) && (
+							<Button
+								variant={data.banned ? "default" : "destructive"}
+								size="icon"
+								onClick={() =>
+									setDeleteModal({
+										id: data.id,
+										title: "User",
+										table: "user",
+										action: data.banned ? "Unban" : "Ban",
+										submitVariant: data.banned ? "default" : "destructive",
+										fn: data.banned ? unbanUser : banUser,
+									})
+								}
+							>
+								<Ban />
+							</Button>
+						)}
 					</div>
 				}
 			/>
@@ -111,15 +117,17 @@ function RouteComponent() {
 								<TableComponent
 									entity="session"
 									columns={sessionColumns({
-										revoke: (token) =>
-											setDeleteModal({
-												id: token,
-												title: "Session",
-												table: "session",
-												action: "Revoke",
-												submitVariant: "destructive",
-												fn: revokeUserSession,
-											}),
+										revoke: hasPermission({ session: ["revoke"] })
+											? (token) =>
+													setDeleteModal({
+														id: token,
+														title: "Session",
+														table: "session",
+														action: "Revoke",
+														submitVariant: "destructive",
+														fn: revokeUserSession,
+													})
+											: undefined,
 									})}
 									query={querySession}
 									queryFn={getUserSessions}
