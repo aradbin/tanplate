@@ -207,19 +207,26 @@ export default function FormComponent({
 											field={{
 												...field,
 												isValid,
+												isInvalid,
 												value: fieldProps?.state?.value,
 												handleBlur: fieldProps?.handleBlur,
 												handleChange: (value: AnyType) => {
 													fieldProps?.handleChange(value);
 													field?.handleChange?.(value);
 												},
+												ariaDescribedBy: isInvalid
+													? `${field.name}-error`
+													: undefined,
 											}}
 										/>
 										{field?.description && (
 											<FieldDescription>{field?.description}</FieldDescription>
 										)}
 										{isInvalid && (
-											<FieldError errors={fieldProps?.state?.meta?.errors} />
+											<FieldError
+												id={`${field.name}-error`}
+												errors={fieldProps?.state?.meta?.errors}
+											/>
 										)}
 									</Field>
 								);

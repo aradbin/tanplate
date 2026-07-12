@@ -10,6 +10,7 @@ export default function PhoneField({ field }: { field: FormFieldType }) {
 			onBlur={field?.handleBlur}
 			onChange={(e) => field?.handleChange(e)}
 			aria-invalid={field?.isInvalid}
+			aria-describedby={field?.ariaDescribedBy}
 			type={field?.type || "text"}
 			placeholder={field?.placeholder || ""}
 			disabled={field?.disabled || false}

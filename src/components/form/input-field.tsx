@@ -14,6 +14,7 @@ export default function InputField({ field }: { field: FormFieldType }) {
 				)
 			}
 			aria-invalid={!field?.isValid}
+			aria-describedby={field?.ariaDescribedBy}
 			type={field?.type || "text"}
 			placeholder={field?.placeholder || ""}
 			disabled={field?.disabled || false}

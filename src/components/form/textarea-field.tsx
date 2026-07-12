@@ -10,6 +10,7 @@ export default function TextareaField({ field }: { field: FormFieldType }) {
 			onBlur={field?.handleBlur}
 			onChange={(e) => field?.handleChange(e.target.value)}
 			aria-invalid={!field?.isValid}
+			aria-describedby={field?.ariaDescribedBy}
 			placeholder={field?.placeholder || ""}
 			disabled={field?.disabled || false}
 			readOnly={field?.readonly || false}

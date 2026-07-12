@@ -383,7 +383,7 @@ Build-step env: same four dummies as the test setup.
 
 ---
 
-# Phase 6 — Accessibility (detailed)
+# Phase 6 — Accessibility (detailed) - Done
 
 Verified baseline: `FieldError` ([ui/field.tsx:216](e:\arad\tanplate\src\components\ui\field.tsx)) already renders `role="alert"`, so error *announcement* works; the gaps are sort state, live status, and error *association*. `src/components/ui/**` is shadcn-generated (Biome-excluded) — do NOT edit it; all changes go in the app-owned components.
 

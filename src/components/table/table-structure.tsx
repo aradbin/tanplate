@@ -32,6 +32,15 @@ export default function TableStructure<TData>({
 											? "sticky right-0 bg-background z-10 max-w-40"
 											: undefined
 									}
+									aria-sort={
+										header.column.getIsSorted() === "asc"
+											? "ascending"
+											: header.column.getIsSorted() === "desc"
+												? "descending"
+												: header.column.getCanSort()
+													? "none"
+													: undefined
+									}
 								>
 									{header.isPlaceholder
 										? null

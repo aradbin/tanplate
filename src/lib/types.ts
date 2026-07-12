@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType, ReactElement } from "react";
 
 // biome-ignore lint/suspicious/noExplicitAny: needed for generic type handling
 export type AnyType = any;
@@ -63,7 +63,8 @@ export interface FormFieldType {
 	disabled?: boolean;
 	readonly?: boolean;
 	hideLabel?: boolean;
-	trigger?: ReactNode;
+	trigger?: ReactElement;
+	ariaDescribedBy?: string;
 }
 
 export interface CustomFieldType {

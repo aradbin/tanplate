@@ -190,7 +190,7 @@ export default function TableComponent<TData, TValue>({
 				: children?.childrenBefore}
 
 			{/* Table */}
-			<div className="overflow-hidden rounded-md border">
+			<div className="overflow-hidden rounded-md border" aria-busy={isLoading}>
 				<TableStructure table={table} isLoading={isLoading} />
 			</div>
 
@@ -200,9 +200,19 @@ export default function TableComponent<TData, TValue>({
 
 			{/* Table Footer */}
 			<div className="flex flex-col lg:flex-row lg:justify-between flex-wrap gap-4">
-				<div className="flex gap-8 lg:gap-2 items-center justify-between lg:justify-start">
+				<div
+					className="flex gap-8 lg:gap-2 items-center justify-between lg:justify-start"
+					aria-live="polite"
+				>
 					<Badge variant="outline" className="text-sm min-w-20">
-						{isCountLoading ? <Spinner /> : `Total: ${table.getRowCount()}`}
+						{isCountLoading ? (
+							<>
+								<Spinner aria-hidden="true" />
+								<span className="sr-only">Loading</span>
+							</>
+						) : (
+							`Total: ${table.getRowCount()}`
+						)}
 					</Badge>
 					{table.getSelectedRowModel().rows.length > 0 && (
 						<Badge variant="outline" className="text-sm">
@@ -213,7 +223,10 @@ export default function TableComponent<TData, TValue>({
 					{enablePagination && (
 						<Badge variant="outline" className="text-sm min-w-20">
 							{isCountLoading ? (
-								<Spinner />
+								<>
+									<Spinner aria-hidden="true" />
+									<span className="sr-only">Loading</span>
+								</>
 							) : (
 								`Page ${table.getState().pagination.pageIndex + 1} of${" "}
 							${table.getPageCount()}`
