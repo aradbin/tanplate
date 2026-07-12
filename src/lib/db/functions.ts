@@ -62,6 +62,33 @@ export function dbWhereBuilder<T extends TableType>(
 	return conditions;
 }
 
+// Recursively injects `isNull(deletedAt)` into every relation of a `with` tree so
+// soft-deleted related rows are excluded at every depth, mirroring dbWhereBuilder's
+// top-level guard. Uses the callback-form `where` so it never needs the relation's
+// target table name — it inspects `fields.deletedAt` on the actual target columns
+// (tables without one are skipped). Preserves/ANDs any caller-supplied nested `where`,
+// and normalizes the `true` shorthand into a config object.
+function withSoftDelete(withRel: AnyType): AnyType {
+	if (!withRel) return withRel;
+	const out: AnyType = {};
+	for (const [key, value] of Object.entries(withRel)) {
+		const config = value === true ? {} : { ...(value as AnyType) };
+		const userWhere = config.where;
+		config.where = (fields: AnyType, ops: AnyType) => {
+			const conds: AnyType[] = [];
+			if (fields.deletedAt) conds.push(ops.isNull(fields.deletedAt));
+			if (userWhere)
+				conds.push(
+					typeof userWhere === "function" ? userWhere(fields, ops) : userWhere,
+				);
+			return conds.length ? ops.and(...conds) : undefined;
+		};
+		if (config.with) config.with = withSoftDelete(config.with);
+		out[key] = config;
+	}
+	return out;
+}
+
 // Returns an un-awaited relational query. Callers await it (optionally inside a
 // transaction via options.client) and can pass options.conditions for custom filters.
 const queryBuilder = ((
@@ -82,7 +109,7 @@ const queryBuilder = ((
 
 	const config = {
 		columns,
-		with: withRel,
+		with: withSoftDelete(withRel),
 		where: where.length ? and(...where) : undefined,
 		orderBy,
 	};
