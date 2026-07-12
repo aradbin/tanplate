@@ -6,7 +6,7 @@ Review of the `tanplate` boilerplate found verified correctness bugs, authorizat
 
 Correction from the initial findings: the app **does** have global error/notFound/pending boundaries via `defaultErrorComponent`/`defaultNotFoundComponent`/`defaultPendingComponent` in [src/router.tsx:27-41](e:\arad\tanplate\src\router.tsx) — that finding was dropped.
 
-## Phase 1 scope (verified bugs)
+## Phase 1 scope (verified bugs) - Done
 
 1. `validate()` in [src/lib/validations.ts:7-9](e:\arad\tanplate\src\lib\validations.ts) wraps every schema in `.partial()`, silently making all "required" fields optional — server-side create/update validation for tasks is not actually enforced.
 2. List server fns (`getTasks`/`getTask`/`getTaskCount`, `getUsers`/`getUser`/`getUserCount`, `getUserSessions`) use identity validators — no runtime validation; `pageSize` is unbounded end-to-end (URL validation, server fn, and query builder).
@@ -212,7 +212,7 @@ export const Route = createFileRoute("/_private/users")({
 
 ---
 
-# Phase 3 — DB & config hardening (detailed)
+# Phase 3 — DB & config hardening (detailed) - Done
 
 ## Step 1 — Index on `tasks.userId`
 

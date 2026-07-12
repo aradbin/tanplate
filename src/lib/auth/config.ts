@@ -30,7 +30,7 @@ export const auth = betterAuth({
 			id,
 		}),
 		onExistingUserSignUp: async ({ user }) => {
-			void sendEmail({
+			sendEmail({
 				to: user.email,
 				subject: "Sign-up attempt with your email",
 				...renderEmail({
@@ -40,10 +40,10 @@ export const auth = betterAuth({
 						"If this was you, try signing in instead. If not, you can safely ignore this email.",
 					],
 				}),
-			});
+			}).catch(() => {});
 		},
 		sendResetPassword: async ({ user, url }) => {
-			void sendEmail({
+			sendEmail({
 				to: user.email,
 				subject: "Reset your password",
 				...renderEmail({
@@ -51,24 +51,24 @@ export const auth = betterAuth({
 					body: "We received a request to reset your password. Click the button below to choose a new one. This link will expire shortly.",
 					action: { label: "Reset password", url },
 				}),
-			});
+			}).catch(() => {});
 		},
 		onPasswordReset: async ({ user }) => {
-			await sendEmail({
+			sendEmail({
 				to: user.email,
 				subject: "Password reset successful",
 				...renderEmail({
 					heading: "Password reset successful",
 					body: "Your password has been reset successfully. If you didn't make this change, please contact support right away.",
 				}),
-			});
+			}).catch(() => {});
 		},
 	},
 	emailVerification: {
 		sendOnSignUp: true,
 		autoSignInAfterVerification: false,
 		async sendVerificationEmail({ user, url }) {
-			void sendEmail({
+			sendEmail({
 				to: user.email,
 				subject: "Verify your email",
 				...renderEmail({
@@ -76,13 +76,16 @@ export const auth = betterAuth({
 					body: "Thanks for signing up! Please confirm your email address by clicking the button below to activate your account.",
 					action: { label: "Verify email", url },
 				}),
-			});
+			}).catch(() => {});
 		},
 	},
+	trustedOrigins: [env.VITE_BASE_URL],
 	advanced: {
 		cookiePrefix: "auth",
 	},
 	session: {
+		expiresIn: 60 * 60 * 24 * 7,
+		updateAge: 60 * 60 * 24,
 		cookieCache: {
 			enabled: true,
 			maxAge: 5 * 60, // 5 minutes
@@ -90,5 +93,7 @@ export const auth = betterAuth({
 	},
 	rateLimit: {
 		enabled: true,
+		window: 60,
+		max: 100,
 	},
 });

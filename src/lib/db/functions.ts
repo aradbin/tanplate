@@ -52,9 +52,10 @@ export function dbWhereBuilder<T extends TableType>(
 	}
 
 	if (params.search?.term && params.search.key?.length) {
+		const term = String(params.search.term).replace(/[\\%_]/g, (c) => `\\${c}`);
 		const ors = params.search.key
 			.filter((k) => t[k])
-			.map((k) => ilike(t[k], `%${params.search?.term}%`));
+			.map((k) => ilike(t[k], `%${term}%`));
 		if (ors.length) conditions.push(or(...ors) as SQL);
 	}
 
