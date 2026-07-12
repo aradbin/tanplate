@@ -1,17 +1,17 @@
 import nodemailer from "nodemailer";
 
-import "dotenv/config";
+import { env } from "@/lib/env";
 
 const APP_NAME = "Tanplate";
-const SMTP_USER = process.env.SMTP_USER as string;
-const BASE_URL = process.env.VITE_BASE_URL as string;
+const SMTP_USER = env.SMTP_USER;
+const BASE_URL = env.VITE_BASE_URL;
 
 const transporter = nodemailer.createTransport({
 	service: "gmail",
 	pool: true,
 	auth: {
 		user: SMTP_USER,
-		pass: process.env.SMTP_PASS,
+		pass: env.SMTP_PASS,
 	},
 });
 

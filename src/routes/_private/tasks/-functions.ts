@@ -10,6 +10,7 @@ import {
 import type { Task, User } from "@/lib/db/schema";
 import type { QueryInputType, QueryParamType } from "@/lib/db/types";
 import {
+	queryInputValidation,
 	stringRequiredValidation,
 	stringValidation,
 	validate,
@@ -61,14 +62,14 @@ function buildTaskQuery(data: QueryInputType): QueryParamType<"tasks"> {
 
 export const getTasks = createServerFn()
 	.middleware([authMiddleware])
-	.validator((data: QueryInputType) => data)
+	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		return (await dbQueryBuilder(buildTaskQuery(data))) as TaskWithUser[];
 	});
 
 export const getTask = createServerFn()
 	.middleware([authMiddleware])
-	.validator((data: QueryInputType) => data)
+	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		return (await dbQueryBuilder(buildTaskQuery(data), {
 			first: true,
@@ -77,7 +78,7 @@ export const getTask = createServerFn()
 
 export const getTaskCount = createServerFn()
 	.middleware([authMiddleware])
-	.validator((data: QueryInputType) => data)
+	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		const [{ count }] = await dbCountBuilder(buildTaskQuery(data));
 

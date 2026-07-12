@@ -1,17 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import ModalComponent from "@/components/common/modal-component";
 import FormComponent from "@/components/form/form-component";
-import type { FormFieldType, ModalStateType } from "@/lib/types";
+import type { AnyType, FormFieldType, ModalStateType } from "@/lib/types";
 import { stringRequiredValidation, stringValidation } from "@/lib/validations";
 import { taskStatusOptions } from "@/lib/variables";
 import { useAuth } from "@/providers/auth-provider";
-import {
-	createTask,
-	type createTaskValidator,
-	getTask,
-	updateTask,
-	type updateTaskValidator,
-} from "./-functions";
+import { createTask, getTask, updateTask } from "./-functions";
 
 export default function TaskForm({
 	modal,
@@ -26,8 +20,6 @@ export default function TaskForm({
 		queryFn: () => getTask({ data: { where: { id: modal?.id } } }),
 		enabled: !!modal?.id && modal?.isOpen,
 	});
-
-	console.log("data", modal?.id, data);
 
 	const formFields: FormFieldType[][] = [
 		[
@@ -88,9 +80,7 @@ export default function TaskForm({
 			{(props) => (
 				<FormComponent
 					fields={formFields}
-					handleSubmit={(
-						values: typeof createTaskValidator | typeof updateTaskValidator,
-					) =>
+					handleSubmit={(values: AnyType) =>
 						modal?.id
 							? updateTask({ data: { ...values, id: modal.id } })
 							: createTask({ data: values })

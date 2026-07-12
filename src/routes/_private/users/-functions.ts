@@ -10,6 +10,7 @@ import {
 	emailRequiredValidation,
 	enamValidation,
 	passwordRequiredValidation,
+	queryInputValidation,
 	stringRequiredValidation,
 } from "@/lib/validations";
 
@@ -43,14 +44,14 @@ function buildUserQuery(data: QueryInputType): QueryParamType<"user"> {
 
 export const getUsers = createServerFn()
 	.middleware([authMiddleware])
-	.validator((data: QueryInputType) => data)
+	.validator(queryInputValidation)
 	.handler(
 		async ({ data }) => (await dbQueryBuilder(buildUserQuery(data))) as User[],
 	);
 
 export const getUser = createServerFn()
 	.middleware([authMiddleware])
-	.validator((data: QueryInputType) => data)
+	.validator(queryInputValidation)
 	.handler(
 		async ({ data }) =>
 			(await dbQueryBuilder(buildUserQuery(data), {
@@ -60,7 +61,7 @@ export const getUser = createServerFn()
 
 export const getUserCount = createServerFn()
 	.middleware([authMiddleware])
-	.validator((data: QueryInputType) => data)
+	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		const [{ count }] = await dbCountBuilder(buildUserQuery(data));
 
@@ -119,7 +120,7 @@ export const unbanUser = createServerFn({ method: "POST" })
 	});
 
 export const getUserSessions = createServerFn()
-	.validator((data: QueryInputType) => data)
+	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
 		const { sessions } = await auth.api.listUserSessions({

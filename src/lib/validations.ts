@@ -1,11 +1,11 @@
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { type ZodRawShape, type ZodType, z } from "zod/v4";
-import { defaultPageSize } from "@/lib/variables";
+import { defaultPageSize, maxPageSize } from "@/lib/variables";
 
 const maxLength = 100;
 
 export const validate = <T extends ZodRawShape>(schema: T) => {
-	return z.object(schema).partial();
+	return z.object(schema);
 };
 
 export const numberValidation = (key: string) => {
@@ -101,6 +101,10 @@ export const emailRequiredValidation = (
 		.max(max, { error: `${key} is too long` });
 };
 
+export const urlRequiredValidation = (key: string) => {
+	return z.url({ error: `${key} must be a valid URL` });
+};
+
 export const phoneValidation = () => {
 	return z
 		.string()
@@ -144,10 +148,34 @@ export const enamValidation = <const T extends string>(
 		.optional();
 };
 
+export const pageSizeValidation = numberValidation("Page Size")
+	.pipe(z.number().max(maxPageSize).optional())
+	.catch(defaultPageSize);
+
 export const defaultSearchParamValidation = {
 	page: numberValidation("Page").catch(1),
-	pageSize: numberValidation("Page Size").catch(defaultPageSize),
+	pageSize: pageSizeValidation,
 	sort: enamValidation("Sort", ["createdAt"]).catch(undefined),
 	order: enamValidation("Order", ["asc", "desc"]).catch(undefined),
 	search: stringNumberValidation("Search").catch(undefined),
 };
+
+export const queryInputValidation = validate({
+	pagination: validate({
+		page: numberValidation("Page").catch(1),
+		pageSize: pageSizeValidation,
+	}).optional(),
+	sort: validate({
+		field: stringValidation("Sort Field"),
+		order: enamValidation("Order", ["asc", "desc"]),
+	}).optional(),
+	search: validate({
+		term: stringNumberValidation("Search"),
+	}).optional(),
+	where: z
+		.record(
+			z.string(),
+			unionValidation("Filter", [z.string(), z.number(), z.boolean()]),
+		)
+		.optional(),
+});

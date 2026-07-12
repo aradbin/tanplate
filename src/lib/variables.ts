@@ -6,6 +6,7 @@ export const authRoutes = [
 ];
 
 export const defaultPageSize = 30;
+export const maxPageSize = 100;
 
 export const genderOptions = [
 	{ id: "male", name: "Male" },

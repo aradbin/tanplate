@@ -4,13 +4,14 @@ import { admin } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { db } from "@/lib/db";
 import { renderEmail, sendEmail } from "@/lib/email";
+import { env } from "@/lib/env";
 
 export const auth = betterAuth({
 	appName: "Tanplate",
 	database: drizzleAdapter(db, {
 		provider: "pg",
 	}),
-	baseURL: process.env.VITE_BASE_URL,
+	baseURL: env.VITE_BASE_URL,
 	plugins: [admin(), tanstackStartCookies()], // make sure tanstackStartCookies is the last plugin in the array
 	emailAndPassword: {
 		enabled: true,

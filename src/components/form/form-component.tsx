@@ -120,7 +120,6 @@ export default function FormComponent({
 			setMessageError(null);
 			try {
 				const response = await handleSubmit(value);
-				console.log("form response", response);
 				if (options?.queryKey) {
 					const key = options.queryKey;
 

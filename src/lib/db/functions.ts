@@ -12,7 +12,7 @@ import {
 	type SQL,
 } from "drizzle-orm";
 import type { AnyType } from "@/lib/types";
-import { defaultPageSize } from "@/lib/variables";
+import { defaultPageSize, maxPageSize } from "@/lib/variables";
 import { db } from ".";
 import * as schema from "./schema";
 import type {
@@ -93,7 +93,10 @@ const queryBuilder = ((
 	}
 
 	const page = pagination?.page ?? 1;
-	const pageSize = pagination?.pageSize ?? defaultPageSize;
+	const pageSize = Math.min(
+		pagination?.pageSize ?? defaultPageSize,
+		maxPageSize,
+	);
 
 	return query.findMany({
 		...config,

@@ -62,11 +62,7 @@ export default function TableComponent<TData, TValue>({
 		options?.initialColumnVisibility ?? {},
 	);
 
-	const {
-		data: tableData,
-		isLoading,
-		error,
-	} = useQuery({
+	const { data: tableData, isLoading } = useQuery({
 		queryKey: [
 			entity,
 			query.where,
@@ -84,8 +80,6 @@ export default function TableComponent<TData, TValue>({
 		queryFn: () => queryCountFn?.({ data: query }),
 		enabled: !!queryCountFn,
 	});
-
-	console.log("tableData", tableData, tableCount, error);
 
 	const enablePagination = options?.hasPagination !== false;
 	const isManualPagination = options?.hasManualPagination !== false;
