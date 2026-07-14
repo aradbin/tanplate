@@ -50,7 +50,7 @@ export const getUsers = createServerFn()
 	);
 
 export const getUser = createServerFn()
-	.middleware([authMiddleware({ user: ["list"] })])
+	.middleware([authMiddleware({ user: ["get"] })])
 	.validator(queryInputValidation)
 	.handler(
 		async ({ data }) =>
@@ -124,7 +124,7 @@ export const unbanUser = createServerFn({ method: "POST" })
 	});
 
 export const getUserSessions = createServerFn()
-	.middleware([authMiddleware({ user: ["list"] })])
+	.middleware([authMiddleware({ session: ["list"] })])
 	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();

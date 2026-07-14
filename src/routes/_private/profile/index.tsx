@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Lock, Mail, ShieldUser } from "lucide-react";
+import FullPageComponent from "@/components/app/full-page-component";
 import LoadingComponent from "@/components/app/loading-component";
 import NotFoundComponent from "@/components/app/not-found-component";
 import ProfileComponent from "@/components/common/profile-component";
@@ -47,7 +48,11 @@ function RouteComponent() {
 	}
 
 	if (!data) {
-		return <NotFoundComponent />;
+		return (
+			<FullPageComponent>
+				<NotFoundComponent />
+			</FullPageComponent>
+		);
 	}
 
 	const querySession: QueryInputType = { where: { id: data.id } };

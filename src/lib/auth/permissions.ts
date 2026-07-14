@@ -23,6 +23,7 @@ export const adminRole = ac.newRole({
 
 export const userRole = ac.newRole({
 	...userAc.statements,
+	user: ["list", "get"],
 	task: ["list", "view", "create", "update", "delete"],
 });
 

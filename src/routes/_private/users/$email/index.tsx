@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Ban, Edit, Mail, ShieldUser } from "lucide-react";
+import FullPageComponent from "@/components/app/full-page-component";
 import LoadingComponent from "@/components/app/loading-component";
 import NotFoundComponent from "@/components/app/not-found-component";
 import ProfileComponent from "@/components/common/profile-component";
@@ -26,7 +27,7 @@ import { sessionColumns } from "./-columns";
 
 export const Route = createFileRoute("/_private/users/$email/")({
 	beforeLoad: ({ context }) =>
-		requirePermission(context.user, { user: ["list"] }),
+		requirePermission(context.user, { user: ["get"] }),
 	component: RouteComponent,
 });
 
@@ -52,7 +53,11 @@ function RouteComponent() {
 	}
 
 	if (!data) {
-		return <NotFoundComponent />;
+		return (
+			<FullPageComponent>
+				<NotFoundComponent />
+			</FullPageComponent>
+		);
 	}
 
 	const querySession: QueryInputType = { where: { id: data.id } };
