@@ -43,6 +43,8 @@ export function dbWhereBuilder<T extends TableType>(
 		for (const [key, value] of Object.entries(params.where)) {
 			if (value !== undefined && t[key]) {
 				conditions.push(
+					// `false` means "not set": match NULL or false so the filter treats
+					// a missing value the same as an explicit false (e.g. unverified emails).
 					value === false
 						? (or(isNull(t[key]), eq(t[key], false)) as SQL)
 						: eq(t[key], value as AnyType),

@@ -64,8 +64,9 @@ Auth lives on the **feature** server functions: each carries `.middleware([authM
 builders.
 
 Shared behavior baked into `dbWhereBuilder`:
-- **Soft delete** — tables with a `deletedAt` column are automatically filtered to non-deleted rows, and `dbDeleteBuilder` sets `deletedAt`/`deletedBy` instead of deleting.
+- **Soft delete** — tables with a `deletedAt` column are automatically filtered to non-deleted rows, and `dbDeleteBuilder` sets `deletedAt`/`deletedBy` instead of deleting. The internal `withSoftDelete` helper propagates this guard recursively into every `with` relation at any depth.
 - `where` filters, `ilike` search across chosen keys, sort (defaults to `desc(createdAt)`), and offset pagination (`defaultPageSize` = 30).
+- `BuilderOptions` — all builders accept `{ client?: DbClient, conditions?: SQL[] }`: pass a Drizzle transaction or extra SQL conditions alongside the standard WHERE.
 
 Feature `-functions.ts` files (e.g. [tasks/-functions.ts](src/routes/_private/tasks/-functions.ts))
 do **not** write SQL. They are `createServerFn` + `authMiddleware`, build a typed `QueryParamType`
@@ -98,13 +99,46 @@ helpers in [validations.ts](src/lib/validations.ts) (`stringRequiredValidation`,
 ### Modals
 [app-provider.tsx](src/providers/app-provider.tsx) holds a **modal stack** (`openModal`/`closeModal`,
 each entry a component + state) plus a dedicated `deleteModal`. Open a form with
-`openModal(TaskForm, { id })`; trigger delete confirmation with `setDeleteModal({ id, table, fn })`.
+`openModal(TaskForm, { id })`; trigger delete/action confirmation with
+`setDeleteModal({ id, table, fn })`. Optional fields: `action` (custom verb, e.g. `"Ban"`),
+`submitVariant` (`"default"` | `"destructive"`), `onSuccess` callback.
 
 ### Auth
 better-auth config in [src/lib/auth/config.ts](src/lib/auth/config.ts) (email+password, required
 email verification, `admin` plugin, Gmail via [email.ts](src/lib/email.ts)). Client hooks in
-`client.ts`, thin server-fn wrappers in `functions.ts`. `tanstackStartCookies` must remain the last
-plugin in the array.
+[client.ts](src/lib/auth/client.ts), thin server-fn wrappers in [functions.ts](src/lib/auth/functions.ts),
+permissions helpers in [permissions.ts](src/lib/auth/permissions.ts), component hook in
+[hooks.ts](src/lib/auth/hooks.ts). `tanstackStartCookies` must remain the last plugin in the array.
+
+### Permissions
+Custom RBAC is layered on better-auth's `admin` plugin. All definitions live in
+[src/lib/auth/permissions.ts](src/lib/auth/permissions.ts). Two roles — `user` and `admin` — are
+defined with `ac.newRole({...})`. To add a new resource, extend `customStatement` with its actions
+and grant them to the relevant roles.
+
+Three utilities cover the three call sites:
+- **`hasPermission(role, permissions)`** — synchronous check (client + server); falls back to `user` role.
+- **`requirePermission(user, permissions)`** — `beforeLoad` guard; throws `PermissionDeniedError`
+  caught by the router's `defaultErrorComponent` → `<UnauthorizedComponent />`.
+- **`usePermissions()`** (`hooks.ts`) — React hook for gating toolbar buttons and column actions.
+
+**Server enforcement** lives in [src/lib/auth/middlewares.ts](src/lib/auth/middlewares.ts):
+```ts
+authMiddleware({ task: ["create"] })
+```
+Pass a `PermissionCheck` to `authMiddleware`; it checks the session then the permission before the
+handler runs (HTTP 403 on failure). Omit the argument to require a session only.
+
+**Route guard pattern:**
+```ts
+beforeLoad: ({ context }) => requirePermission(context.user, { task: ["list"] })
+```
+
+**Component gate pattern:**
+```ts
+const { hasPermission } = usePermissions();
+hasPermission({ task: ["create"] }) && <Button>Create</Button>
+```
 
 ### Query caching
 React Query is persisted to IndexedDB ([persister.ts](src/lib/persister.ts)) via
@@ -118,10 +152,10 @@ The `tasks` module in [src/routes/_private/tasks/](src/routes/_private/tasks/) i
 end-to-end CRUD example. To add a new entity, mirror these files:
 
 1. **Schema** — add `src/lib/db/schema/<entity>.ts` (`pgTable` + spread `...timestamps`), export `$inferSelect`/`$inferInsert` types, re-export from [schema/index.ts](src/lib/db/schema/index.ts), wire relations in `relations.ts`, then `pnpm db:generate && pnpm db:migrate` (or `db:push` in dev). The new table name becomes a valid `TableType` automatically.
-2. **`-functions.ts`** — no raw SQL. Define zod validators with `validate({...})`, a `build<Entity>Query(data: QueryInputType): QueryParamType<"<entity>">` helper (relations via `with`, search `key`s, `where`), then thin `createServerFn` + `.middleware([authMiddleware])` server fns that delegate to the server-only builders: `get<Entities>` → `dbQueryBuilder(build<Entity>Query(data))`, `get<Entity>` → `dbQueryBuilder(build<Entity>Query(data), { first: true })`, `get<Entity>Count` → `dbCountBuilder(...)`, `create<Entity>` → `dbInsertBuilder({ table, values: data, userId: context.user.id })`, `update<Entity>` → `dbUpdateBuilder({ table, values, where: { id }, userId: context.user.id })`, `delete<Entity>` → `dbDeleteBuilder({ table, where: { id }, userId: context.user.id })`. Call the builders directly — never wrap them in `createServerFn` (see the DB builder layer note above). See [tasks/-functions.ts](src/routes/_private/tasks/-functions.ts).
+2. **`-functions.ts`** — no raw SQL. Define zod validators with `validate({...})`, a `build<Entity>Query(data: QueryInputType): QueryParamType<"<entity>">` helper (relations via `with`, search `key`s, `where`), then thin `createServerFn` + `.middleware([authMiddleware({ entity: ["action"] })])` server fns that delegate to the server-only builders: `get<Entities>` → `dbQueryBuilder(build<Entity>Query(data))`, `get<Entity>` → `dbQueryBuilder(build<Entity>Query(data), { first: true })`, `get<Entity>Count` → `dbCountBuilder(...)`, `create<Entity>` → `dbInsertBuilder({ table, values: data, userId: context.user.id })`, `update<Entity>` → `dbUpdateBuilder({ table, values, where: { id }, userId: context.user.id })`, `delete<Entity>` → `dbDeleteBuilder({ table, where: { id }, userId: context.user.id })`. Call the builders directly — never wrap them in `createServerFn` (see the DB builder layer note above). See [tasks/-functions.ts](src/routes/_private/tasks/-functions.ts).
 3. **`-columns.tsx`** — export `<entity>Columns({ actions }): ColumnDef<...>[]`; use `TableColumnHeader` for headers and `TableRowActions` (fed `actions`) for the row action cell. See [tasks/-columns.tsx](src/routes/_private/tasks/-columns.tsx).
 4. **`-form.tsx`** — a `ModalComponent` (variant `sheet`) wrapping `FormComponent`; declare `FormFieldType[][]` (rows of fields) with per-field `validationOnSubmit`, load the edit record with `useQuery` keyed on `modal.id`, and branch `handleSubmit` between create/update. See [tasks/-form.tsx](src/routes/_private/tasks/-form.tsx).
-5. **`index.tsx`** — `createFileRoute` with `validateSearch` (spread `defaultSearchParamValidation`, add entity-specific `sort`/filter enums), build a `QueryInputType` from `Route.useSearch()`, and render `<TableComponent entity=... columns=... queryFn=... queryCountFn=... />`. Wire create/edit via `openModal(<Entity>Form, ...)` and delete via `setDeleteModal({ table, fn })` from `useApp()`. See [tasks/index.tsx](src/routes/_private/tasks/index.tsx).
+5. **`index.tsx`** — `createFileRoute` with `validateSearch` (spread `defaultSearchParamValidation`, add entity-specific `sort`/filter enums), `beforeLoad` calling `requirePermission(context.user, { entity: ["list"] })`, build a `QueryInputType` from `Route.useSearch()`, and render `<TableComponent entity=... columns=... queryFn=... queryCountFn=... />`. Gate toolbar buttons and column actions with `usePermissions().hasPermission(...)`. Wire create/edit via `openModal(<Entity>Form, ...)` and delete via `setDeleteModal({ table, fn })` from `useApp()`. See [tasks/index.tsx](src/routes/_private/tasks/index.tsx).
 
 ## Conventions
 

@@ -5,6 +5,8 @@ import {
 	userAc,
 } from "better-auth/plugins/admin/access";
 
+// Add new resource actions here (e.g. { invoice: ["list", "create"] }) and grant
+// them to the relevant roles below — that is all the permission system needs.
 const customStatement = {
 	task: ["list", "view", "create", "update", "delete"],
 } as const;

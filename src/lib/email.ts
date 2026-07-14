@@ -6,6 +6,8 @@ const APP_NAME = "Tanplate";
 const SMTP_USER = env.SMTP_USER;
 const BASE_URL = env.VITE_BASE_URL;
 
+// pool: true reuses a single SMTP connection across sends instead of opening
+// a new TCP handshake per email — avoids Gmail's per-connection rate limits.
 const transporter = nodemailer.createTransport({
 	service: "gmail",
 	pool: true,
