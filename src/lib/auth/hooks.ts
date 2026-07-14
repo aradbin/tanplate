@@ -1,5 +1,8 @@
-import { authClient } from "@/lib/auth/client";
-import type { PermissionCheck, RoleType } from "@/lib/auth/permissions";
+import {
+	hasPermission,
+	type PermissionCheck,
+	type RoleType,
+} from "@/lib/auth/permissions";
 import { useAuth } from "@/providers/auth-provider";
 
 export function usePermissions() {
@@ -9,9 +12,6 @@ export function usePermissions() {
 	return {
 		role,
 		hasPermission: (permissions: PermissionCheck) =>
-			authClient.admin.checkRolePermission({
-				role,
-				permissions,
-			}),
+			hasPermission(role, permissions),
 	};
 }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions } from "@/lib/auth/hooks";
+import { requirePermission } from "@/lib/auth/permissions";
 import type { QueryInputType } from "@/lib/db/types";
 import { capitalize } from "@/lib/utils";
 import { useApp } from "@/providers/app-provider";
@@ -24,6 +25,8 @@ import {
 import { sessionColumns } from "./-columns";
 
 export const Route = createFileRoute("/_private/users/$email/")({
+	beforeLoad: ({ context }) =>
+		requirePermission(context.user, { user: ["list"] }),
 	component: RouteComponent,
 });
 

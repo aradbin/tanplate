@@ -5,6 +5,8 @@ import ErrorComponent from "@/components/app/error-component";
 import FullPageComponent from "@/components/app/full-page-component";
 import LoadingComponent from "@/components/app/loading-component";
 import NotFoundComponent from "@/components/app/not-found-component";
+import UnauthorizedComponent from "@/components/app/unauthorized-component";
+import { isPermissionDeniedError } from "@/lib/auth/permissions";
 import { routeTree } from "./routeTree.gen";
 
 export function getRouter() {
@@ -29,9 +31,13 @@ export function getRouter() {
 				<NotFoundComponent />
 			</FullPageComponent>
 		),
-		defaultErrorComponent: () => (
+		defaultErrorComponent: ({ error }) => (
 			<FullPageComponent>
-				<ErrorComponent />
+				{isPermissionDeniedError(error) ? (
+					<UnauthorizedComponent />
+				) : (
+					<ErrorComponent />
+				)}
 			</FullPageComponent>
 		),
 		defaultPendingComponent: () => (

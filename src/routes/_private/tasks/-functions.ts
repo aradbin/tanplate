@@ -61,14 +61,14 @@ function buildTaskQuery(data: QueryInputType): QueryParamType<"tasks"> {
 }
 
 export const getTasks = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ task: ["list"] })])
 	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		return (await dbQueryBuilder(buildTaskQuery(data))) as TaskWithUser[];
 	});
 
 export const getTask = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ task: ["view"] })])
 	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		return (await dbQueryBuilder(buildTaskQuery(data), {
@@ -77,7 +77,7 @@ export const getTask = createServerFn()
 	});
 
 export const getTaskCount = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ task: ["list"] })])
 	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		const [{ count }] = await dbCountBuilder(buildTaskQuery(data));
@@ -86,7 +86,7 @@ export const getTaskCount = createServerFn()
 	});
 
 export const createTask = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ task: ["create"] })])
 	.validator(createTaskValidator)
 	.handler(async ({ data, context }) => {
 		const [row] = await dbInsertBuilder({
@@ -99,7 +99,7 @@ export const createTask = createServerFn({ method: "POST" })
 	});
 
 export const updateTask = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ task: ["update"] })])
 	.validator(updateTaskValidator)
 	.handler(async ({ data, context }) => {
 		const { id, ...values } = data;
@@ -114,7 +114,7 @@ export const updateTask = createServerFn({ method: "POST" })
 	});
 
 export const deleteTask = createServerFn({ method: "POST" })
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ task: ["delete"] })])
 	.validator(validate({ id: stringRequiredValidation("Id") }))
 	.handler(async ({ data, context }) => {
 		const [row] = await dbDeleteBuilder({

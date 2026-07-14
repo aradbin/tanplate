@@ -3,7 +3,7 @@ import { PlusCircle } from "lucide-react";
 import TableComponent from "@/components/table/table-component";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/lib/auth/hooks";
-import { roleOptions } from "@/lib/auth/permissions";
+import { requirePermission, roleOptions } from "@/lib/auth/permissions";
 import type { QueryInputType } from "@/lib/db/types";
 import {
 	booleanValidation,
@@ -26,6 +26,8 @@ export const Route = createFileRoute("/_private/users/")({
 		role: enamValidation("Role", ["user", "admin"]).catch(undefined),
 		banned: booleanValidation("Banned").catch(undefined),
 	}),
+	beforeLoad: ({ context }) =>
+		requirePermission(context.user, { user: ["list"] }),
 	component: RouteComponent,
 });
 

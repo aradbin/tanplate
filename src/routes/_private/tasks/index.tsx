@@ -3,6 +3,7 @@ import { PlusCircle } from "lucide-react";
 import TableComponent from "@/components/table/table-component";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/lib/auth/hooks";
+import { requirePermission } from "@/lib/auth/permissions";
 import type { QueryInputType } from "@/lib/db/types";
 import {
 	defaultSearchParamValidation,
@@ -25,6 +26,8 @@ export const Route = createFileRoute("/_private/tasks/")({
 			undefined,
 		),
 	}),
+	beforeLoad: ({ context }) =>
+		requirePermission(context.user, { task: ["list"] }),
 	component: RouteComponent,
 });
 

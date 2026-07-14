@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Drill } from "lucide-react";
+import { ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Empty,
@@ -10,16 +10,16 @@ import {
 	EmptyTitle,
 } from "@/components/ui/empty";
 
-export default function ComingSoonComponent() {
+export default function UnauthorizedComponent() {
 	return (
 		<Empty className="absolute w-3/4 max-w-200 top-10 border border-dashed py-20">
 			<EmptyHeader>
 				<EmptyMedia variant="icon">
-					<Drill />
+					<ShieldOff />
 				</EmptyMedia>
-				<EmptyTitle>Coming Soon</EmptyTitle>
+				<EmptyTitle>Access Denied</EmptyTitle>
 				<EmptyDescription>
-					We're working hard to bring this feature to you. Stay tuned!
+					You don't have permission to view this page
 				</EmptyDescription>
 			</EmptyHeader>
 			<EmptyContent>

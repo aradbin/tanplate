@@ -12,7 +12,7 @@ import {
 
 export default function NotFoundComponent() {
 	return (
-		<Empty className="border border-dashed py-20">
+		<Empty className="absolute w-3/4 max-w-200 top-10 border border-dashed py-20">
 			<EmptyHeader>
 				<EmptyMedia variant="icon">
 					<Ban />

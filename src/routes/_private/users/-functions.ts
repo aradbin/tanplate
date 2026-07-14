@@ -43,14 +43,14 @@ function buildUserQuery(data: QueryInputType): QueryParamType<"user"> {
 }
 
 export const getUsers = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ user: ["list"] })])
 	.validator(queryInputValidation)
 	.handler(
 		async ({ data }) => (await dbQueryBuilder(buildUserQuery(data))) as User[],
 	);
 
 export const getUser = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ user: ["list"] })])
 	.validator(queryInputValidation)
 	.handler(
 		async ({ data }) =>
@@ -60,7 +60,7 @@ export const getUser = createServerFn()
 	);
 
 export const getUserCount = createServerFn()
-	.middleware([authMiddleware])
+	.middleware([authMiddleware({ user: ["list"] })])
 	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		const [{ count }] = await dbCountBuilder(buildUserQuery(data));
@@ -69,6 +69,7 @@ export const getUserCount = createServerFn()
 	});
 
 export const createUser = createServerFn({ method: "POST" })
+	.middleware([authMiddleware({ user: ["create"] })])
 	.validator(createUserValidator)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
@@ -86,6 +87,7 @@ export const createUser = createServerFn({ method: "POST" })
 	});
 
 export const updateUser = createServerFn({ method: "POST" })
+	.middleware([authMiddleware({ user: ["update"] })])
 	.validator(updateUserValidator)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
@@ -102,6 +104,7 @@ export const updateUser = createServerFn({ method: "POST" })
 	});
 
 export const banUser = createServerFn({ method: "POST" })
+	.middleware([authMiddleware({ user: ["ban"] })])
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
@@ -111,6 +114,7 @@ export const banUser = createServerFn({ method: "POST" })
 	});
 
 export const unbanUser = createServerFn({ method: "POST" })
+	.middleware([authMiddleware({ user: ["ban"] })])
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
@@ -120,6 +124,7 @@ export const unbanUser = createServerFn({ method: "POST" })
 	});
 
 export const getUserSessions = createServerFn()
+	.middleware([authMiddleware({ user: ["list"] })])
 	.validator(queryInputValidation)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
@@ -134,6 +139,7 @@ export const getUserSessions = createServerFn()
 	});
 
 export const revokeUserSession = createServerFn({ method: "POST" })
+	.middleware([authMiddleware({ session: ["revoke"] })])
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }) => {
 		const headers = getRequestHeaders();
