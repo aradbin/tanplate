@@ -83,7 +83,10 @@ export const createUser = createServerFn({ method: "POST" })
 			},
 		});
 
-		return user;
+		return {
+			...user,
+			message: "User created successfully",
+		};
 	});
 
 export const updateUser = createServerFn({ method: "POST" })
@@ -100,7 +103,7 @@ export const updateUser = createServerFn({ method: "POST" })
 			body: { userId: data.id, role: data.role || "user" },
 		});
 
-		return { id: data.id };
+		return { id: data.id, message: "User updated successfully" };
 	});
 
 export const banUser = createServerFn({ method: "POST" })
@@ -110,7 +113,7 @@ export const banUser = createServerFn({ method: "POST" })
 		const headers = getRequestHeaders();
 		await auth.api.banUser({ headers, body: { userId: data.id } });
 
-		return { id: data.id };
+		return { id: data.id, message: "User banned successfully" };
 	});
 
 export const unbanUser = createServerFn({ method: "POST" })
@@ -120,7 +123,7 @@ export const unbanUser = createServerFn({ method: "POST" })
 		const headers = getRequestHeaders();
 		await auth.api.unbanUser({ headers, body: { userId: data.id } });
 
-		return { id: data.id };
+		return { id: data.id, message: "User unbanned successfully" };
 	});
 
 export const getUserSessions = createServerFn()
@@ -148,5 +151,5 @@ export const revokeUserSession = createServerFn({ method: "POST" })
 			body: { sessionToken: data.id },
 		});
 
-		return { id: data.id };
+		return { id: data.id, message: "Session revoked successfully" };
 	});

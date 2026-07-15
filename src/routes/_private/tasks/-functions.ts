@@ -95,7 +95,10 @@ export const createTask = createServerFn({ method: "POST" })
 			userId: context.user.id,
 		});
 
-		return row as Task;
+		return {
+			...(row as Task),
+			message: "Task created successfully",
+		};
 	});
 
 export const updateTask = createServerFn({ method: "POST" })
@@ -110,7 +113,10 @@ export const updateTask = createServerFn({ method: "POST" })
 			userId: context.user.id,
 		});
 
-		return row as Task;
+		return {
+			...(row as Task),
+			message: "Task updated successfully",
+		};
 	});
 
 export const deleteTask = createServerFn({ method: "POST" })
@@ -123,5 +129,8 @@ export const deleteTask = createServerFn({ method: "POST" })
 			userId: context.user.id,
 		});
 
-		return row as Task;
+		return {
+			...(row as Task),
+			message: "Task deleted successfully",
+		};
 	});
