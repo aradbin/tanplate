@@ -26,9 +26,16 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
 ############################
 FROM deps AS build
 # VITE_ vars are inlined into the client bundle at build time, so they must be
-# present during `pnpm build` (not just at runtime).
+# present during `pnpm build` (not just at runtime) — and must be the real value.
 ARG VITE_BASE_URL
 ENV VITE_BASE_URL=${VITE_BASE_URL}
+# src/lib/env.ts validates process.env at import time and the SSR/prerender pass
+# imports it, so these must be *present* to build (see .github/workflows/ci.yml).
+# They are read from process.env as a whole object, so Vite cannot inline them;
+# the real values arrive at runtime via compose `env_file`.
+ENV DATABASE_URL=postgres://build:build@localhost:5432/build \
+    SMTP_USER=build@example.com \
+    SMTP_PASS=build
 COPY . .
 RUN pnpm build
 

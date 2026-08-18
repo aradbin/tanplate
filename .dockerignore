@@ -1,0 +1,44 @@
+# ── Dependencies ────────────────────────────────────────────────
+# CRITICAL: pnpm's node_modules is a tree of symlinks with absolute *host* paths
+# into node_modules/.pnpm. Copying it over the container's installed tree leaves
+# every package dangling ("Cannot find module .../vite/bin/vite.js").
+node_modules
+**/node_modules
+
+# ── Build output (regenerated inside the image by `pnpm build`) ──
+.output
+.nitro
+.tanstack
+.vinxi
+.wrangler
+.data
+dist
+dist-ssr
+
+# ── Secrets — must never land in a build layer ──────────────────
+.env
+.env.*
+
+# ── VCS / CI / editors / agent tooling ──────────────────────────
+.git
+.gitignore
+.github
+.vscode
+.idea
+.claude
+.agents
+plans
+todo
+todos.json
+*.local
+__unconfig*
+
+# ── Docs & Docker's own files ───────────────────────────────────
+README.md
+CLAUDE.md
+AGENT.md
+.cta.json
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
