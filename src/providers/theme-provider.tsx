@@ -83,3 +83,16 @@ export const useTheme = () => {
 
 	return context;
 };
+
+/**
+ * The concrete `"light" | "dark"` theme in effect, resolving `"system"` via the
+ * OS preference. Defaults to `"light"` during SSR / before hydration.
+ */
+export const useResolvedTheme = (): "light" | "dark" => {
+	const { theme } = useTheme();
+	if (theme === "dark" || theme === "light") return theme;
+	if (typeof window === "undefined") return "light";
+	return window.matchMedia("(prefers-color-scheme: dark)").matches
+		? "dark"
+		: "light";
+};

@@ -27,7 +27,7 @@ export default function AvatarGroupComponent({
 			))}
 			{users.length > 4 && (
 				<HoverCard>
-					<HoverCardTrigger>
+					<HoverCardTrigger delay={10} closeDelay={10}>
 						<div>
 							<AvatarComponent
 								user={{

@@ -67,6 +67,7 @@ Loaded from `.env.local` / `.env`. Required:
 | `pnpm db:push` | Push schema directly (dev sync) |
 | `pnpm db:pull` | Introspect an existing DB into schema |
 | `pnpm db:studio` | Open Drizzle Studio |
+| `pnpm db:seed` | Create the initial admin user from `SEED_ADMIN_*` (idempotent; also runs on container startup) |
 
 ## Project structure
 
@@ -116,9 +117,9 @@ any route can read `context.user`.
 
 **Providers.** Nesting is Theme → Query → Tooltip → Auth.
 
-**Query caching.** React Query is persisted to IndexedDB (24h `maxAge`) via
-`PersistQueryClientProvider`. The `["auth"]` query is blacklisted from persistence. Bump the `buster`
-string in [query-provider.tsx](src/providers/query-provider.tsx) to invalidate all persisted caches.
+**Query caching.** In-memory only — no cross-session persistence. `staleTime` 1m / `gcTime` 5m are
+set on the `QueryClient` in [router.tsx](src/router.tsx); [query-provider.tsx](src/providers/query-provider.tsx)
+is a plain `QueryClientProvider`.
 
 **Path alias.** Import from `@/*` → `src/*`. Prefer it over relative paths.
 

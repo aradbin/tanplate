@@ -27,6 +27,26 @@ const colsClass: Record<number, string> = {
 	6: "lg:grid-cols-6",
 };
 
+// Package plain form values into multipart FormData (used when the form has a
+// file field). Empty values are dropped; Files/Blobs pass through, Dates become
+// ISO strings, other objects are JSON-encoded, primitives are stringified.
+function toFormData(value: Record<string, AnyType>): FormData {
+	const formData = new FormData();
+	for (const [key, val] of Object.entries(value)) {
+		if (val === undefined || val === null || val === "") continue;
+		if (val instanceof File || val instanceof Blob) {
+			formData.append(key, val);
+		} else if (val instanceof Date) {
+			formData.append(key, val.toISOString());
+		} else if (typeof val === "object") {
+			formData.append(key, JSON.stringify(val));
+		} else {
+			formData.append(key, String(val));
+		}
+	}
+	return formData;
+}
+
 export default function FormComponent({
 	fields,
 	handleSubmit,
@@ -119,7 +139,10 @@ export default function FormComponent({
 		onSubmit: async ({ value }) => {
 			setMessageError(null);
 			try {
-				const response = await handleSubmit(value);
+				const isMultipart = flatFields.some((f) => f.type === "file");
+				const response = await handleSubmit(
+					isMultipart ? toFormData(value) : value,
+				);
 				if (options?.queryKey) {
 					const key = options.queryKey;
 

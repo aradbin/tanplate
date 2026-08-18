@@ -129,6 +129,18 @@ authMiddleware({ task: ["create"] })
 Pass a `PermissionCheck` to `authMiddleware`; it checks the session then the permission before the
 handler runs (HTTP 403 on failure). Omit the argument to require a session only.
 
+For **API routes** (`server.handlers`) use the sibling `apiAuthMiddleware` instead — same
+`PermissionCheck` argument, but it is a *request* middleware (which is what a route's
+`server.middleware` accepts; the two middleware kinds are not interchangeable), and it answers
+401/403 rather than redirecting to `/login`, since these URLs are fetched directly. The session
+lands on `context.session`:
+```ts
+server: {
+	middleware: [apiAuthMiddleware({ task: ["view"] })],
+	handlers: { GET: ({ params, context }) => ... },
+}
+```
+
 **Route guard pattern:**
 ```ts
 beforeLoad: ({ context }) => requirePermission(context.user, { task: ["list"] })
@@ -141,10 +153,9 @@ hasPermission({ task: ["create"] }) && <Button>Create</Button>
 ```
 
 ### Query caching
-React Query is persisted to IndexedDB ([persister.ts](src/lib/persister.ts)) via
-`PersistQueryClientProvider` (24h maxAge). The `["auth"]` query is blacklisted from persistence.
-Bump the `buster` string in [query-provider.tsx](src/providers/query-provider.tsx) to invalidate all
-persisted caches.
+In-memory only — no cross-session persistence. The `QueryClient` in [router.tsx](src/router.tsx)
+sets `staleTime` 1m / `gcTime` 5m; [query-provider.tsx](src/providers/query-provider.tsx) is a plain
+`QueryClientProvider`.
 
 ## Adding a CRUD feature (use `tasks` as the reference)
 

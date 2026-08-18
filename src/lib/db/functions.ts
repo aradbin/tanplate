@@ -7,9 +7,11 @@ import {
 	desc,
 	eq,
 	ilike,
+	inArray,
 	isNull,
 	or,
 	type SQL,
+	sql,
 } from "drizzle-orm";
 import type { AnyType } from "@/lib/types";
 import { defaultPageSize, maxPageSize } from "@/lib/variables";
@@ -43,11 +45,14 @@ export function dbWhereBuilder<T extends TableType>(
 		for (const [key, value] of Object.entries(params.where)) {
 			if (value !== undefined && t[key]) {
 				conditions.push(
-					// `false` means "not set": match NULL or false so the filter treats
-					// a missing value the same as an explicit false (e.g. unverified emails).
-					value === false
-						? (or(isNull(t[key]), eq(t[key], false)) as SQL)
-						: eq(t[key], value as AnyType),
+					// An array value matches any of the listed values (multi-select filters).
+					Array.isArray(value)
+						? inArray(t[key], value as AnyType[])
+						: // `false` means "not set": match NULL or false so the filter treats
+							// a missing value the same as an explicit false (e.g. unverified emails).
+							value === false
+							? (or(isNull(t[key]), eq(t[key], false)) as SQL)
+							: eq(t[key], value as AnyType),
 				);
 			}
 		}
@@ -122,6 +127,10 @@ const queryBuilder = ((
 		return query.findFirst(config as AnyType) as AnyType;
 	}
 
+	if (pagination?.all) {
+		return query.findMany(config as AnyType) as AnyType;
+	}
+
 	const page = pagination?.page ?? 1;
 	const pageSize = Math.min(
 		pagination?.pageSize ?? defaultPageSize,
@@ -161,8 +170,11 @@ export const dbCountBuilder = createServerOnlyFn(countBuilder);
 
 // Layer 1: everything comes as props; returns the un-awaited insert query.
 // Injects a generated id and (when provided) createdBy on each row.
+// With `onConflict` it becomes an upsert, letting a caller replay the same row
+// idempotently instead of having to read first and race between the read and
+// the write.
 const insertBuilder: DbInsertBuilder = (
-	{ table, values, userId },
+	{ table, values, userId, onConflict },
 	{ client = db } = {},
 ) => {
 	const t = tables[table] as AnyType;
@@ -174,7 +186,27 @@ const insertBuilder: DbInsertBuilder = (
 		...(userId ? { createdBy: userId } : {}),
 	}));
 
-	return client.insert(t).values(rows).returning() as AnyType;
+	const query = client.insert(t).values(rows);
+
+	if (onConflict) {
+		const target = (
+			Array.isArray(onConflict.target) ? onConflict.target : [onConflict.target]
+		).map((key) => t[key]);
+		// Each listed column takes the value from the row that conflicted, via SQL's
+		// `excluded` pseudo-table — so one statement upserts a whole batch correctly,
+		// which a single literal patch object could not do.
+		const set: Record<string, AnyType> = {};
+		for (const key of onConflict.set) {
+			set[key] = sql`excluded.${sql.identifier(t[key].name)}`;
+		}
+		// Mirrors what dbUpdateBuilder stamps: the DO UPDATE arm is an update in
+		// every sense but the SQL verb.
+		if (userId) set.updatedBy = userId;
+
+		return query.onConflictDoUpdate({ target, set }).returning() as AnyType;
+	}
+
+	return query.returning() as AnyType;
 };
 
 // Server-only insert builder. Callers pass userId (from their authed context)

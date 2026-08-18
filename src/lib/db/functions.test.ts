@@ -1,7 +1,7 @@
 import { and, type SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { dbWhereBuilder } from "@/lib/db/functions";
+import { dbInsertBuilder, dbWhereBuilder } from "@/lib/db/functions";
 import type { AnyType } from "@/lib/types";
 
 const dialect: AnyType = new PgDialect();
@@ -40,6 +40,27 @@ describe("dbWhereBuilder", () => {
 			expect(sql).toContain('"banned" is null');
 			expect(sql).toContain('"banned" = $');
 			expect(params).toContain(false);
+		});
+
+		it("generates IN for an array value (multi-select filters)", () => {
+			const conds = dbWhereBuilder({
+				table: "tasks",
+				where: { status: ["todo", "done"] },
+			});
+			const { sql, params } = toSql(conds);
+			expect(sql).toContain('"status" in (');
+			expect(params).toEqual(["todo", "done"]);
+		});
+
+		it("prefers the array branch over the false-boolean branch", () => {
+			// [false] is an array first: it must become IN, not the isNull OR eq form.
+			const conds = dbWhereBuilder({
+				table: "user",
+				where: { banned: [false] } as AnyType,
+			});
+			const { sql } = toSql(conds);
+			expect(sql).toContain('"banned" in (');
+			expect(sql).not.toContain('"banned" is null');
 		});
 
 		it("skips undefined values", () => {
@@ -89,5 +110,59 @@ describe("dbWhereBuilder", () => {
 			// % → \%, _ → \_ ; in JS string literals backslash is doubled
 			expect(params).toContain("%50\\%\\_%");
 		});
+	});
+});
+
+describe("dbInsertBuilder onConflict", () => {
+	// The builder returns an un-awaited Drizzle query, so its SQL can be read
+	// without a live connection.
+	const toInsertSql = (query: AnyType) => query.toSQL() as { sql: string };
+
+	it("emits a plain INSERT when onConflict is omitted", () => {
+		const { sql } = toInsertSql(
+			dbInsertBuilder({
+				table: "tasks",
+				values: { title: "a", userId: "u1" },
+			}),
+		);
+		expect(sql).not.toContain("on conflict");
+	});
+
+	it("sets each listed column from the excluded row", () => {
+		const { sql } = toInsertSql(
+			dbInsertBuilder({
+				table: "tasks",
+				values: { id: "t1", title: "a", userId: "u1" },
+				onConflict: { target: "id", set: ["title", "status"] },
+			}),
+		);
+		expect(sql).toContain('on conflict ("id") do update set');
+		// `title` maps to the DB column `name`, and both sides of the assignment
+		// resolve through that mapping.
+		expect(sql).toContain('"name" = excluded."name"');
+		expect(sql).toContain('"status" = excluded."status"');
+	});
+
+	it("accepts a composite conflict target", () => {
+		const { sql } = toInsertSql(
+			dbInsertBuilder({
+				table: "tasks",
+				values: { id: "t1", title: "a", userId: "u1" },
+				onConflict: { target: ["id", "userId"], set: ["title"] },
+			}),
+		);
+		expect(sql).toContain('on conflict ("id","user_id")');
+	});
+
+	it("stamps updatedBy on the DO UPDATE arm when a userId is passed", () => {
+		const { sql } = toInsertSql(
+			dbInsertBuilder({
+				table: "tasks",
+				values: { id: "t1", title: "a", userId: "u1" },
+				userId: "actor",
+				onConflict: { target: "id", set: ["title"] },
+			}),
+		);
+		expect(sql).toContain('"updated_by" = $');
 	});
 });

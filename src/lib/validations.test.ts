@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
 	defaultSearchParamValidation,
+	enamArrayValidation,
 	pageSizeValidation,
 	queryInputValidation,
 	stringRequiredValidation,
@@ -84,5 +85,53 @@ describe("queryInputValidation", () => {
 			where: { a: { evil: true } },
 		});
 		expect(result.success).toBe(false);
+	});
+});
+
+describe("enamArrayValidation", () => {
+	const statuses = ["todo", "in-progress", "done"] as const;
+	const schema = enamArrayValidation("Status", statuses);
+
+	it("normalizes a single value to an array", () => {
+		const result = schema.safeParse("todo");
+		expect(result.success).toBe(true);
+		if (result.success) expect(result.data).toEqual(["todo"]);
+	});
+
+	it("passes an array through", () => {
+		const result = schema.safeParse(["todo", "done"]);
+		expect(result.success).toBe(true);
+		if (result.success) expect(result.data).toEqual(["todo", "done"]);
+	});
+
+	it("rejects a value outside the enum", () => {
+		expect(schema.safeParse("archived").success).toBe(false);
+		expect(schema.safeParse(["todo", "archived"]).success).toBe(false);
+	});
+
+	it("allows undefined (the filter is optional)", () => {
+		const result = schema.safeParse(undefined);
+		expect(result.success).toBe(true);
+		if (result.success) expect(result.data).toBeUndefined();
+	});
+});
+
+describe("queryInputValidation multi-select support", () => {
+	it("accepts an array of strings as a where value", () => {
+		const result = queryInputValidation.safeParse({
+			where: { status: ["todo", "done"] },
+		});
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.where?.status).toEqual(["todo", "done"]);
+		}
+	});
+
+	it("accepts pagination.all", () => {
+		const result = queryInputValidation.safeParse({
+			pagination: { all: true },
+		});
+		expect(result.success).toBe(true);
+		if (result.success) expect(result.data.pagination?.all).toBe(true);
 	});
 });

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import type { ReactElement } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { OptionType } from "@/lib/types";
 import { getInitials } from "@/lib/utils";
@@ -42,7 +42,7 @@ export default function AvatarComponent({
 		</Avatar>
 	);
 
-	const renderWithLink = (children: ReactNode) =>
+	const renderWithLink = (children: ReactElement): ReactElement =>
 		profile && user?.email ? (
 			<Link to={profileLinks[profile]} params={{ email: user.email }}>
 				{children}
@@ -58,7 +58,11 @@ export default function AvatarComponent({
 	if (options?.hideBody) {
 		return (
 			<HoverCard>
-				<HoverCardTrigger render={renderWithLink(renderAvatar())} />
+				<HoverCardTrigger
+					delay={10}
+					closeDelay={10}
+					render={renderWithLink(renderAvatar())}
+				/>
 				<HoverCardContent className="flex min-w-64 flex-col gap-0.5" side="top">
 					{renderWithLink(
 						<div className="flex items-center gap-2">

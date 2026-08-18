@@ -24,3 +24,7 @@ export const taskStatusOptions = [
 	{ id: "in-progress", name: "In Progress" },
 	{ id: "done", name: "Done" },
 ];
+
+// Upload ceiling for task attachments, enforced server-side in the upload
+// validator. 10 MB.
+export const maxAttachmentBytes = 10 * 1024 * 1024;

@@ -35,6 +35,8 @@ interface TableComponentProps<TData, TValue> {
 		initialColumnVisibility?: VisibilityState;
 		resetPreserve?: string[];
 	};
+	view?: "table" | "card";
+	cards?: (data: TData[] | undefined, isLoading: boolean) => ReactNode;
 	toolbar?: ReactNode;
 	children?: {
 		childrenBefore?:
@@ -54,6 +56,8 @@ export default function TableComponent<TData, TValue>({
 	queryFn,
 	queryCountFn,
 	options,
+	view = "table",
+	cards,
 	toolbar,
 	children,
 }: TableComponentProps<TData, TValue>) {
@@ -189,10 +193,17 @@ export default function TableComponent<TData, TValue>({
 				? children.childrenBefore(tableData, isLoading)
 				: children?.childrenBefore}
 
-			{/* Table */}
-			<div className="overflow-hidden rounded-md border" aria-busy={isLoading}>
-				<TableStructure table={table} isLoading={isLoading} />
-			</div>
+			{/* Table / Cards */}
+			{view === "card" && cards ? (
+				cards(tableData, isLoading)
+			) : (
+				<div
+					className="overflow-hidden rounded-md border"
+					aria-busy={isLoading}
+				>
+					<TableStructure table={table} isLoading={isLoading} />
+				</div>
+			)}
 
 			{typeof children?.childrenAfter === "function"
 				? children.childrenAfter(tableData, isLoading)

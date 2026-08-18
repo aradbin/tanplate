@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { account, session, tasks, user } from "./schema";
+import { account, session, taskAttachments, tasks, user } from "./schema";
 
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
@@ -21,9 +21,20 @@ export const accountRelations = relations(account, ({ one }) => ({
 	}),
 }));
 
-export const tasksRelations = relations(tasks, ({ one }) => ({
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
 	user: one(user, {
 		fields: [tasks.userId],
 		references: [user.id],
 	}),
+	attachments: many(taskAttachments),
 }));
+
+export const taskAttachmentsRelations = relations(
+	taskAttachments,
+	({ one }) => ({
+		task: one(tasks, {
+			fields: [taskAttachments.taskId],
+			references: [tasks.id],
+		}),
+	}),
+);

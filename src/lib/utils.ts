@@ -131,6 +131,17 @@ export const formatCurrency = (amount: AnyType, currency?: string) => {
 	return amount.toLocaleString();
 };
 
+export const formatBytes = (bytes: number | null | undefined): string => {
+	if (!bytes || bytes <= 0) return "0 B";
+	const units = ["B", "KB", "MB", "GB", "TB"];
+	const i = Math.min(
+		Math.floor(Math.log(bytes) / Math.log(1024)),
+		units.length - 1,
+	);
+	const value = bytes / 1024 ** i;
+	return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+};
+
 export const slugify = (str: string) => {
 	return str
 		.toLowerCase()

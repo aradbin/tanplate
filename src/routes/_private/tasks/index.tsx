@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PlusCircle } from "lucide-react";
+import { Paperclip, PlusCircle } from "lucide-react";
 import TableComponent from "@/components/table/table-component";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/lib/auth/hooks";
@@ -7,11 +7,13 @@ import { requirePermission } from "@/lib/auth/permissions";
 import type { QueryInputType } from "@/lib/db/types";
 import {
 	defaultSearchParamValidation,
+	enamArrayValidation,
 	enamValidation,
 	validate,
 } from "@/lib/validations";
 import { taskStatusOptions } from "@/lib/variables";
 import { useApp } from "@/providers/app-provider";
+import TaskAttachmentsModal from "./-attachments-modal";
 import { taskColumns } from "./-columns";
 import TaskForm from "./-form";
 import { deleteTask, getTaskCount, getTasks } from "./-functions";
@@ -22,9 +24,13 @@ export const Route = createFileRoute("/_private/tasks/")({
 		sort: enamValidation("Sort", ["createdAt", "status", "dueDate"]).catch(
 			undefined,
 		),
-		status: enamValidation("Status", ["todo", "in-progress", "done"]).catch(
-			undefined,
-		),
+		// Array-valued so the status filter can select several at once; the
+		// builder turns an array into an `IN (...)` condition.
+		status: enamArrayValidation("Status", [
+			"todo",
+			"in-progress",
+			"done",
+		]).catch(undefined),
 	}),
 	beforeLoad: ({ context }) =>
 		requirePermission(context.user, { task: ["list"] }),
@@ -50,6 +56,17 @@ function RouteComponent() {
 			entity="tasks"
 			columns={taskColumns({
 				actions: {
+					custom: hasPermission({ task: ["update"] })
+						? [
+								{
+									key: "attachments",
+									label: "Attachments",
+									icon: <Paperclip />,
+									onClick: (id: string) =>
+										openModal(TaskAttachmentsModal, { id }),
+								},
+							]
+						: undefined,
 					edit: hasPermission({ task: ["update"] })
 						? (id) => openModal(TaskForm, { id })
 						: undefined,
@@ -72,6 +89,7 @@ function RouteComponent() {
 					key: "status",
 					options: taskStatusOptions,
 					value: search.status,
+					multiple: true,
 				},
 			]}
 			options={{

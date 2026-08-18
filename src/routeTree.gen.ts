@@ -22,6 +22,7 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as PrivateUsersEmailIndexRouteImport } from './routes/_private/users/$email/index'
 import { Route as AuthPasswordResetIndexRouteImport } from './routes/_auth/password/reset/index'
 import { Route as AuthPasswordForgotIndexRouteImport } from './routes/_auth/password/forgot/index'
+import { Route as ApiTasksAttachmentsIdRouteImport } from './routes/api/tasks/attachments/$id'
 
 const PrivateRouteRoute = PrivateRouteRouteImport.update({
   id: '/_private',
@@ -86,6 +87,11 @@ const AuthPasswordForgotIndexRoute = AuthPasswordForgotIndexRouteImport.update({
   path: '/password/forgot/',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const ApiTasksAttachmentsIdRoute = ApiTasksAttachmentsIdRouteImport.update({
+  id: '/api/tasks/attachments/$id',
+  path: '/api/tasks/attachments/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/profile/': typeof PrivateProfileIndexRoute
   '/tasks/': typeof PrivateTasksIndexRoute
   '/users/': typeof PrivateUsersIndexRoute
+  '/api/tasks/attachments/$id': typeof ApiTasksAttachmentsIdRoute
   '/password/forgot/': typeof AuthPasswordForgotIndexRoute
   '/password/reset/': typeof AuthPasswordResetIndexRoute
   '/users/$email/': typeof PrivateUsersEmailIndexRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/profile': typeof PrivateProfileIndexRoute
   '/tasks': typeof PrivateTasksIndexRoute
   '/users': typeof PrivateUsersIndexRoute
+  '/api/tasks/attachments/$id': typeof ApiTasksAttachmentsIdRoute
   '/password/forgot': typeof AuthPasswordForgotIndexRoute
   '/password/reset': typeof AuthPasswordResetIndexRoute
   '/users/$email': typeof PrivateUsersEmailIndexRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/_private/profile/': typeof PrivateProfileIndexRoute
   '/_private/tasks/': typeof PrivateTasksIndexRoute
   '/_private/users/': typeof PrivateUsersIndexRoute
+  '/api/tasks/attachments/$id': typeof ApiTasksAttachmentsIdRoute
   '/_auth/password/forgot/': typeof AuthPasswordForgotIndexRoute
   '/_auth/password/reset/': typeof AuthPasswordResetIndexRoute
   '/_private/users/$email/': typeof PrivateUsersEmailIndexRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/profile/'
     | '/tasks/'
     | '/users/'
+    | '/api/tasks/attachments/$id'
     | '/password/forgot/'
     | '/password/reset/'
     | '/users/$email/'
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/tasks'
     | '/users'
+    | '/api/tasks/attachments/$id'
     | '/password/forgot'
     | '/password/reset'
     | '/users/$email'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/_private/profile/'
     | '/_private/tasks/'
     | '/_private/users/'
+    | '/api/tasks/attachments/$id'
     | '/_auth/password/forgot/'
     | '/_auth/password/reset/'
     | '/_private/users/$email/'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   PrivateRouteRoute: typeof PrivateRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiTasksAttachmentsIdRoute: typeof ApiTasksAttachmentsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +285,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPasswordForgotIndexRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/api/tasks/attachments/$id': {
+      id: '/api/tasks/attachments/$id'
+      path: '/api/tasks/attachments/$id'
+      fullPath: '/api/tasks/attachments/$id'
+      preLoaderRoute: typeof ApiTasksAttachmentsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -319,6 +339,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   PrivateRouteRoute: PrivateRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiTasksAttachmentsIdRoute: ApiTasksAttachmentsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

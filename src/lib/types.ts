@@ -41,7 +41,8 @@ export type FieldType =
 	| "hidden"
 	| "month"
 	| "phone"
-	| "color";
+	| "color"
+	| "file";
 
 export interface FormFieldType {
 	name: string;
@@ -65,6 +66,7 @@ export interface FormFieldType {
 	disabled?: boolean;
 	readonly?: boolean;
 	hideLabel?: boolean;
+	accept?: string;
 	trigger?: ReactElement;
 	ariaDescribedBy?: string;
 }
@@ -89,6 +91,14 @@ export interface TableActionType {
 	view?: (id: AnyType, item?: AnyType) => void;
 	edit?: (id: AnyType, item?: AnyType) => void;
 	delete?: (id: AnyType, item?: AnyType) => void;
+	// Feature-specific buttons, rendered before view/edit/delete. Use for actions
+	// the three standard verbs do not cover (e.g. a task's attachments).
+	custom?: {
+		key: string;
+		label: string;
+		icon: ReactElement;
+		onClick: (id: AnyType, item?: AnyType) => void;
+	}[];
 }
 
 export interface SortType {
@@ -100,6 +110,7 @@ export interface SortType {
 export interface PaginationType {
 	page?: number;
 	pageSize?: number;
+	all?: boolean; // when true, skip limit/offset and return every matching row
 }
 
 export interface SearchType {

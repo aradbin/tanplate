@@ -16,6 +16,22 @@ interface TableRowActionsProps {
 export function TableRowActions({ row, actions }: TableRowActionsProps) {
 	return (
 		<div className="flex justify-end gap-1">
+			{actions?.custom?.map((action) => (
+				<Tooltip key={action.key}>
+					<TooltipTrigger
+						render={
+							<Button
+								variant="outline"
+								size="icon"
+								onClick={() => action.onClick(row.original.id, row.original)}
+							/>
+						}
+					>
+						{action.icon}
+					</TooltipTrigger>
+					<TooltipContent>{action.label}</TooltipContent>
+				</Tooltip>
+			))}
 			{actions?.view && (
 				<Tooltip>
 					<TooltipTrigger

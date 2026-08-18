@@ -11,7 +11,9 @@ export default function DeleteComponent() {
 		<ModalComponent
 			options={{
 				header: `${action}${deleteModal ? ` ${deleteModal?.title}` : ""}`,
-				description: `Are you sure you want to ${action.toLowerCase()} this${deleteModal ? ` ${deleteModal?.title?.toLowerCase()}` : ""}?`,
+				description:
+					deleteModal?.description ??
+					`Are you sure you want to ${action.toLowerCase()} this${deleteModal ? ` ${deleteModal?.title?.toLowerCase()}` : ""}?`,
 				isOpen: !!deleteModal,
 				onClose: () => {
 					setDeleteModal(null);

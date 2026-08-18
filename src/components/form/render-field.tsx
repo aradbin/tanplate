@@ -1,6 +1,7 @@
 import type { FormFieldType } from "@/lib/types";
 import ColorField from "./color-field";
 import DateField from "./date-field";
+import FileField from "./file-field";
 import InputField from "./input-field";
 import MonthField from "./month-field";
 import PhoneField from "./phone-field";
@@ -25,6 +26,8 @@ export default function RenderField({ field }: { field: FormFieldType }) {
 			return <PhoneField field={field} />;
 		case "color":
 			return <ColorField field={field} />;
+		case "file":
+			return <FileField field={field} />;
 
 		default:
 			return <InputField field={field} />;

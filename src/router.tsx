@@ -13,8 +13,8 @@ export function getRouter() {
 	const queryClient = new QueryClient({
 		defaultOptions: {
 			queries: {
-				staleTime: 1000 * 60 * 1, // 1 minutes
-				gcTime: 1000 * 60 * 60 * 24, // 24h (must >= maxAge for persist)
+				staleTime: 1000 * 60 * 1, // 1 minute
+				gcTime: 1000 * 60 * 5, // 5 minutes (in-memory only; React Query default)
 				retry: 0,
 			},
 		},

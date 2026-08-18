@@ -83,6 +83,17 @@ export const createUser = createServerFn({ method: "POST" })
 			},
 		});
 
+		// Admin-created accounts never go through sign-up, so nothing would send
+		// the verification mail they need to sign in under `requireEmailVerification`.
+		// Non-fatal: the user exists either way and can re-request it from login.
+		try {
+			await auth.api.sendVerificationEmail({
+				body: { email: user.email },
+			});
+		} catch (error) {
+			console.error("Failed to send verification email for new user", error);
+		}
+
 		return {
 			...user,
 			message: "User created successfully",

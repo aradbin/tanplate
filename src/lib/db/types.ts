@@ -119,6 +119,20 @@ export interface InsertParams<T extends TableType> {
 	table: T;
 	values: Partial<InsertType<T>> | Partial<InsertType<T>>[];
 	userId?: string;
+	/**
+	 * Turns the insert into an upsert (`ON CONFLICT ... DO UPDATE`).
+	 *
+	 * `target` names the conflicting column(s), which must carry a unique
+	 * constraint or index. `set` lists the columns to overwrite on the existing
+	 * row **from the incoming row** (SQL's `excluded`) — per row, so this stays
+	 * correct for a batch, which a literal patch object could not be. A column
+	 * absent from `values` resolves to NULL, which is how `deletedAt` can be
+	 * cleared by re-inserting a soft-deleted row. Omit for a plain insert.
+	 */
+	onConflict?: {
+		target: ColumnKey<T> | ColumnKey<T>[];
+		set: ColumnKey<T>[];
+	};
 }
 
 // Public signature of the insert builder.

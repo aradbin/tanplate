@@ -8,6 +8,10 @@ export const validate = <T extends ZodRawShape>(schema: T) => {
 	return z.object(schema);
 };
 
+export const objectArrayValidation = <T extends ZodRawShape>(shape: T) => {
+	return z.array(z.object(shape));
+};
+
 export const numberValidation = (key: string) => {
 	return z.preprocess(
 		(val) => (val === "" || val === null ? undefined : val),
@@ -133,6 +137,10 @@ export const passwordRequiredValidation = (
 		.max(max, { error: `${key} is too long` });
 };
 
+export const jsonValidation = (_key: string) => {
+	return z.any().optional();
+};
+
 export const unionValidation = (key: string, array: ZodType[]) => {
 	return z.union(array, { error: `${key} has invalid value` }).optional();
 };
@@ -145,6 +153,28 @@ export const enamValidation = <const T extends string>(
 		.enum(options as unknown as [T, ...T[]], {
 			error: `${key} must be one of ${options.join(", ")}`,
 		})
+		.optional();
+};
+
+export const enamRequiredValidation = <const T extends string>(
+	key: string,
+	options: readonly T[],
+) => {
+	return z.enum(options as unknown as [T, ...T[]], {
+		error: `${key} must be one of ${options.join(", ")}`,
+	});
+};
+
+export const enamArrayValidation = <const T extends string>(
+	key: string,
+	options: readonly T[],
+) => {
+	const enam = z.enum(options as unknown as [T, ...T[]], {
+		error: `${key} must be one of ${options.join(", ")}`,
+	});
+	return z
+		.union([enam, z.array(enam)])
+		.transform((val) => (val ? (Array.isArray(val) ? val : [val]) : undefined))
 		.optional();
 };
 
@@ -164,6 +194,7 @@ export const queryInputValidation = validate({
 	pagination: validate({
 		page: numberValidation("Page").catch(1),
 		pageSize: pageSizeValidation,
+		all: booleanValidation("All"),
 	}).optional(),
 	sort: validate({
 		field: stringValidation("Sort Field"),
@@ -175,7 +206,12 @@ export const queryInputValidation = validate({
 	where: z
 		.record(
 			z.string(),
-			unionValidation("Filter", [z.string(), z.number(), z.boolean()]),
+			unionValidation("Filter", [
+				z.string(),
+				z.number(),
+				z.boolean(),
+				z.array(z.union([z.string(), z.number()])),
+			]),
 		)
 		.optional(),
 });
