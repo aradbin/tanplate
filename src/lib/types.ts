@@ -8,6 +8,7 @@ export type AnyType = any;
 export interface NavItemType {
 	title?: string;
 	href?: string;
+	search?: Record<string, string>;
 	label?: string;
 	icon?: LucideIcon | null;
 	items?: NavItemType[];

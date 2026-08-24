@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,12 +17,29 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { usePermissions } from "@/lib/auth/hooks";
-import type { NavItemType } from "@/lib/types";
+import type { AnyType, NavItemType } from "@/lib/types";
 import { mainNavItems } from "./nav-items";
+
+const collectSearchKeys = (
+	items: NavItemType[] = [],
+	keysByHref = new Map<string, Set<string>>(),
+) => {
+	for (const item of items) {
+		collectSearchKeys(item.items, keysByHref);
+		if (!item.href || !item.search) continue;
+		const keys = keysByHref.get(item.href) ?? new Set<string>();
+		for (const key of Object.keys(item.search)) keys.add(key);
+		keysByHref.set(item.href, keys);
+	}
+
+	return keysByHref;
+};
 
 export function NavMain() {
 	const { openMobile, setOpenMobile } = useSidebar();
 	const { hasPermission } = usePermissions();
+	const { pathname, search } = useLocation();
+	const currentSearch = search as Record<string, unknown>;
 
 	const groups = mainNavItems()
 		.map((group) => ({
@@ -32,6 +49,10 @@ export function NavMain() {
 			),
 		}))
 		.filter((group) => group.items?.length);
+
+	const searchKeysByHref = collectSearchKeys(
+		groups.flatMap((group) => group.items ?? []),
+	);
 
 	const renderMenuItem = (item: NavItemType, titleLength = 25) => {
 		if (item?.items?.length) {
@@ -66,10 +87,22 @@ export function NavMain() {
 			);
 		}
 
+		const matchesPath =
+			!!item.href &&
+			(pathname === item.href || pathname.startsWith(`${item.href}/`));
+		const isActive =
+			matchesPath &&
+			[...(searchKeysByHref.get(item.href ?? "") ?? [])].every(
+				(key) => currentSearch[key] === item.search?.[key],
+			);
+
 		return (
 			<SidebarMenuButton
 				onClick={() => setOpenMobile(!openMobile)}
-				render={<Link to={item?.href} />}
+				render={
+					<Link to={item?.href} search={(item?.search ?? {}) as AnyType} />
+				}
+				isActive={isActive}
 			>
 				{item?.icon && <item.icon className="me-2 h-4 w-4" />}
 				<span>{item?.title?.slice(0, titleLength)}</span>
@@ -87,7 +120,9 @@ export function NavMain() {
 			{groups?.map((group, index) => (
 				<SidebarGroup key={`${group?.title}-${index}`} className="px-2 py-0">
 					{group?.title && (
-						<SidebarGroupLabel>{group?.title}</SidebarGroupLabel>
+						<SidebarGroupLabel className="group-data-[collapsible=icon]:pointer-events-none">
+							{group?.title}
+						</SidebarGroupLabel>
 					)}
 					<SidebarGroupContent>
 						<SidebarMenu>
