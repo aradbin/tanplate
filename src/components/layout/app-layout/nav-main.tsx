@@ -60,7 +60,10 @@ export function NavMain() {
 				<Collapsible className="group/collapsible">
 					<CollapsibleTrigger
 						render={
-							<SidebarMenuButton className="w-full justify-between [&[data-panel-open]>svg]:rotate-180" />
+							<SidebarMenuButton
+								tooltip={item?.title}
+								className="w-full justify-between [&[data-panel-open]>svg]:rotate-180"
+							/>
 						}
 					>
 						<span className="flex items-center">
@@ -98,6 +101,7 @@ export function NavMain() {
 
 		return (
 			<SidebarMenuButton
+				tooltip={item?.title}
 				onClick={() => setOpenMobile(!openMobile)}
 				render={
 					<Link to={item?.href} search={(item?.search ?? {}) as AnyType} />
