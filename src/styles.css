@@ -3,6 +3,10 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/inter";
 
+/* Supplies the `prose` utilities that style rich text, in the editor surface and
+   in `RichText` alike. */
+@plugin "@tailwindcss/typography";
+
 @custom-variant dark (&:is(.dark *));
 
 * {
@@ -143,5 +147,43 @@ body {
   }
   html {
     @apply font-sans;
+  }
+  /* The default scrollbar is a slab of OS chrome in an otherwise themed UI, most
+     obvious under a wide table since that always scrolls. Thin it and paint the
+     thumb from the theme so it reads as part of the surface it sits on. The
+     `no-scrollbar` and `scrollbar-*` utilities still override this — they land in
+     a later cascade layer. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 35%, transparent)
+      transparent;
+  }
+}
+/* The rich text editor surface. Tiptap ships no CSS of its own, so the caret
+   behavior and the empty-document placeholder are defined here alongside the
+   `prose` typography the editor shares with `RichText`. */
+@layer components {
+  .tiptap {
+    outline: none;
+  }
+  /* `is-empty` is set by Tiptap's Placeholder extension on the empty node, and
+     `data-placeholder` carries the field's own placeholder text. */
+  .tiptap p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
+  }
+  /* Cell borders come from `richTextProseClass`, which the read view shares — only
+     what is specific to editing lives here. `relative` anchors the selection
+     overlay below. */
+  .tiptap table {
+    @apply border-collapse;
+  }
+  .tiptap :is(th, td) {
+    @apply relative;
+  }
+  /* ProseMirror marks a multi-cell drag selection with this class rather than the
+     browser's own selection, which does not survive a table. */
+  .tiptap .selectedCell::after {
+    @apply pointer-events-none absolute inset-0 z-10 bg-primary/15 content-[''];
   }
 }

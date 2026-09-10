@@ -1,18 +1,30 @@
 import { redirect } from "@tanstack/react-router";
 import { createMiddleware } from "@tanstack/react-start";
-import {
-	getRequestHeaders,
-	setResponseStatus,
-} from "@tanstack/react-start/server";
+import { getRequestHeaders } from "@tanstack/react-start/server";
+import { runWithTenant } from "@/lib/db/tenant";
 import { auth } from "./config";
-import { hasPermission, type PermissionCheck } from "./permissions";
+import { assertPermission, type PermissionCheck } from "./permissions";
+import { resolveActor } from "./session";
 
 /**
  * Auth (and optional permission) guard for server functions.
  *
  * - `authMiddleware()` — requires a session only.
  * - `authMiddleware({ task: ["create"] })` — requires a session AND the given
- *   permission for the session user's role.
+ *   permission for the actor's role in their active organization.
+ *
+ * Its REST twin is `apiAuthMiddleware()`
+ * ([api/middleware.ts](src/lib/api/middleware.ts)) — same factory shape, same
+ * optional `PermissionCheck`, same `assertPermission` behind it, same actor on
+ * `context.user`, but 401 instead of a login redirect. A feature on the
+ * three-layer split (see CLAUDE.md) asserts permissions in its service instead
+ * and calls **both** middlewares with no arguments, so the two transports share a
+ * single declaration.
+ *
+ * It does **not** catch or re-map what is thrown below it: a handler's
+ * `notFound(...)` or `forbidden(...)` propagates as-is. `AppError` statuses are
+ * honoured on the REST side only, by `apiErrorMiddleware`, because the RPC client
+ * surfaces the *message* (`getErrorMessages` → toast) and never reads a status.
  */
 export const authMiddleware = (permissions?: PermissionCheck) =>
 	createMiddleware().server(async ({ next }) => {
@@ -24,50 +36,18 @@ export const authMiddleware = (permissions?: PermissionCheck) =>
 			throw redirect({ to: "/login" });
 		}
 
-		if (permissions && !hasPermission(session.user.role, permissions)) {
-			setResponseStatus(403);
-			throw new Error("You do not have permission to perform this action.");
+		const user = await resolveActor(session);
+
+		if (permissions) {
+			assertPermission(user, permissions);
 		}
 
-		return await next({
-			context: session,
-		});
-	});
-
-/**
- * Auth (and optional permission) guard for API route handlers.
- *
- * The sibling of `authMiddleware`, for the other kind of endpoint. Two things
- * differ, and both are why this cannot simply reuse it:
- *  - it is a `request` middleware, which is what a route's `server.middleware`
- *    accepts — `authMiddleware` is a `function` middleware, the kind
- *    `createServerFn().middleware([...])` takes, and the two are not assignable;
- *  - it answers 401/403 rather than redirecting to `/login`. These URLs are
- *    fetched directly by the browser or a client, so an HTML login page would be
- *    a useless response body (and a 302 masks the real failure).
- *
- * Usage — the session lands on `context.session` for the handler to read:
- *
- * ```ts
- * export const Route = createFileRoute("/api/thing/$id")({
- *   server: {
- *     middleware: [apiAuthMiddleware({ thing: ["view"] })],
- *     handlers: { GET: ({ params, context }) => ... },
- *   },
- * });
- * ```
- */
-export const apiAuthMiddleware = (permissions?: PermissionCheck) =>
-	createMiddleware({ type: "request" }).server(async ({ request, next }) => {
-		const session = await auth.api.getSession({ headers: request.headers });
-
-		if (!session) {
-			return new Response("Unauthorized", { status: 401 });
-		}
-
-		if (permissions && !hasPermission(session.user.role, permissions)) {
-			return new Response("Forbidden", { status: 403 });
-		}
-
-		return next({ context: { session } });
+		// Everything below the middleware runs confined to the actor's
+		// organization: the generic builders read this scope, so a handler cannot
+		// reach another tenant's rows even if it forgets to filter.
+		return await runWithTenant(user.organizationId, () =>
+			next({
+				context: { ...session, user },
+			}),
+		);
 	});

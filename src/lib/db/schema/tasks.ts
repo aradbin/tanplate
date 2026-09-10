@@ -1,5 +1,6 @@
 import { date, index, integer, pgTable, text } from "drizzle-orm/pg-core";
 import { timestamps } from "./columns.helpers";
+import { tenant } from "./organization";
 import { user } from "./user";
 
 export const tasks = pgTable(
@@ -13,6 +14,7 @@ export const tasks = pgTable(
 		userId: text("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
+		...tenant,
 		...timestamps,
 	},
 	(table) => [index("tasks_user_id_idx").on(table.userId)],
@@ -34,6 +36,7 @@ export const taskAttachments = pgTable(
 		file: text("file").notNull(),
 		mimeType: text("mime_type").notNull(),
 		size: integer("size").notNull(),
+		...tenant,
 		...timestamps,
 	},
 	(table) => [index("task_attachments_task_id_idx").on(table.taskId)],

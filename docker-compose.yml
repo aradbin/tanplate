@@ -18,9 +18,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Internal-only. Uncomment for local debugging (e.g. drizzle studio, psql).
+      # First run on an empty volume spends time in initdb; without this the
+      # retries are consumed before Postgres is up and `app` never starts.
+      start_period: 30s
+    # Bound to loopback: reach it over an SSH tunnel for drizzle studio / psql.
+    # Docker's port publishing writes its own iptables rules and bypasses UFW, so
+    # a bare "1002:5432" would put Postgres on the public internet.
     ports:
-      - "1002:5432"
+      - "127.0.0.1:1002:5432"
     # S3-compatible object storage for app file uploads/documents.
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
@@ -45,10 +50,13 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    # Internal-only. Uncomment for local debugging (9000 = S3 API, 9001 = console).
+    # Loopback-only, for local debugging (9000 = S3 API, 9001 = console). The app
+    # reaches MinIO at http://minio:9000 on the compose network; no browser ever
+    # talks to it directly, since files are served through the app's own
+    # /api/v1 routes.
     ports:
-      - "1003:9000"
-      - "1004:9001"
+      - "127.0.0.1:1003:9000"
+      - "127.0.0.1:1004:9001"
     # One-shot: waits for MinIO, then creates the app bucket (idempotent).
   minio-init:
     image: minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
@@ -63,7 +71,7 @@ services:
     environment:
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-minioadmin}
       S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-minioadmin}
-      S3_BUCKET: 
+      S3_BUCKET: ${S3_BUCKET:-app}
     entrypoint: >
       /bin/sh -c " until mc alias set local http://minio:9000 \"$${S3_ACCESS_KEY_ID}\" \"$${S3_SECRET_ACCESS_KEY}\"; do
         echo 'waiting for minio...'; sleep 2;
@@ -98,8 +106,33 @@ services:
       HOST: 0.0.0.0
       PORT: "3000"
       RUN_MIGRATIONS: "true"
+    # Loopback-only; public traffic arrives via Caddy over the app network. This
+    # mapping is what you open locally (http://localhost:1001) when no domain is
+    # configured.
     ports:
-      - "1001:3000"
+      - "127.0.0.1:1001:3000"
+
+  # TLS termination and automatic Let's Encrypt certificates for the public
+  # hostname. Config in ./Caddyfile — set your domain there before deploying.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - app
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and the ACME account key. Must be a named volume: losing it
+      # forces re-issuance, which counts against Let's Encrypt's rate limits.
+      - caddy_data:/data
+      - caddy_config:/config
 
 networks:
   app:
@@ -108,3 +141,5 @@ networks:
 volumes:
   pgdata:
   miniodata:
+  caddy_data:
+  caddy_config:

@@ -13,6 +13,7 @@ import TableReset from "@/components/table/table-reset";
 import TableSearch from "@/components/table/table-search";
 import TableStructure from "@/components/table/table-structure";
 import { TableViewOptions } from "@/components/table/table-view-options";
+import { useOrgKey } from "@/lib/auth/use-org-key";
 import type { QueryInputType, TableType } from "@/lib/db/types";
 import type { TableFilterType } from "@/lib/types";
 import { defaultPageSize } from "@/lib/variables";
@@ -66,6 +67,13 @@ export default function TableComponent<TData, TValue>({
 		options?.initialColumnVisibility ?? {},
 	);
 
+	// Every list below is tenant-scoped server-side, so the cache key has to be
+	// too — otherwise switching organizations serves the previous one on the first
+	// paint, before the refetch lands. It goes **last** because invalidation is
+	// prefix-matched: `invalidateQueries({ queryKey: [entity] })` still has to hit
+	// these after a create or an edit.
+	const organizationId = useOrgKey();
+
 	const { data: tableData, isLoading } = useQuery({
 		queryKey: [
 			entity,
@@ -75,12 +83,19 @@ export default function TableComponent<TData, TValue>({
 			query.sort?.order,
 			query.pagination?.page,
 			query.pagination?.pageSize,
+			organizationId,
 		],
 		queryFn: () => queryFn?.({ data: query }),
 	});
 
 	const { data: tableCount, isLoading: isCountLoading } = useQuery({
-		queryKey: [entity, "count", query.where, query.search?.term],
+		queryKey: [
+			entity,
+			"count",
+			query.where,
+			query.search?.term,
+			organizationId,
+		],
 		queryFn: () => queryCountFn?.({ data: query }),
 		enabled: !!queryCountFn,
 	});

@@ -1,13 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
+	datetimeValidation,
 	defaultSearchParamValidation,
 	enamArrayValidation,
+	numberRequiredValidation,
+	numberValidation,
 	pageSizeValidation,
 	queryInputValidation,
+	stringArrayRequiredValidation,
+	stringArrayValidation,
 	stringRequiredValidation,
+	stringValidation,
 	validate,
+	validateRows,
 } from "@/lib/validations";
-import { defaultPageSize, maxPageSize } from "@/lib/variables";
+import { defaultPageSize, maxInteger, maxPageSize } from "@/lib/variables";
 
 describe("validate()", () => {
 	const schema = validate({ title: stringRequiredValidation("Title") });
@@ -133,5 +140,105 @@ describe("queryInputValidation multi-select support", () => {
 		});
 		expect(result.success).toBe(true);
 		if (result.success) expect(result.data.pagination?.all).toBe(true);
+	});
+});
+
+describe("numberValidation()", () => {
+	it("rejects a fraction", () => {
+		expect(numberValidation("Count").safeParse(1.5).success).toBe(false);
+		expect(numberRequiredValidation("Count").safeParse(1.5).success).toBe(
+			false,
+		);
+	});
+
+	// Every numeric column is a Postgres `integer`, so an oversized value has to
+	// fail here rather than in the database.
+	it("rejects a value above maxInteger by default", () => {
+		expect(numberValidation("Count").safeParse(maxInteger + 1).success).toBe(
+			false,
+		);
+		expect(numberValidation("Count").safeParse(maxInteger).success).toBe(true);
+	});
+
+	it("honours an explicit ceiling", () => {
+		expect(numberRequiredValidation("Count", 10).safeParse(11).success).toBe(
+			false,
+		);
+	});
+});
+
+describe("datetimeValidation()", () => {
+	const schema = datetimeValidation("Starts At");
+
+	// An untouched picker emits "", which a timestamp column rejects; null is the
+	// instruction to clear it.
+	it("turns an empty string into null", () => {
+		expect(schema.parse("")).toBeNull();
+	});
+
+	it("passes an ISO string through and allows absence", () => {
+		expect(schema.parse("2026-01-01T09:00:00.000Z")).toBe(
+			"2026-01-01T09:00:00.000Z",
+		);
+		expect(schema.parse(undefined)).toBeUndefined();
+	});
+});
+
+describe("stringArrayValidation()", () => {
+	const schema = stringArrayValidation("Tag");
+
+	it("wraps a single value in a list", () => {
+		expect(schema.parse("a")).toEqual(["a"]);
+	});
+
+	it("passes a list through and allows absence", () => {
+		expect(schema.parse(["a", "b"])).toEqual(["a", "b"]);
+		expect(schema.parse(undefined)).toBeUndefined();
+	});
+});
+
+describe("stringArrayRequiredValidation()", () => {
+	const schema = stringArrayRequiredValidation("Attendee");
+
+	it("rejects an empty list", () => {
+		const result = schema.safeParse([]);
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.issues[0].message).toBe("Attendee is required");
+		}
+	});
+
+	it("accepts a list naming at least one thing", () => {
+		expect(schema.safeParse(["user-1"]).success).toBe(true);
+	});
+});
+
+describe("validateRows()", () => {
+	const shape = {
+		title: stringRequiredValidation("Title", 10),
+		note: stringValidation("Note", 5),
+	};
+
+	it("gives a passing row an empty object", () => {
+		expect(validateRows(shape, [{ title: "Budget" }])).toEqual([{}]);
+	});
+
+	it("keys each failure by its field, in row order", () => {
+		expect(
+			validateRows(shape, [
+				{ title: "Budget" },
+				{ title: "", note: "far too long" },
+			]),
+		).toEqual([{}, { title: "Title is required", note: "Note is too long" }]);
+	});
+
+	// The editors render one message per field, so a field that fails twice must
+	// not overwrite the first thing wrong with it.
+	it("keeps the first message for a field", () => {
+		const [errors] = validateRows(
+			{ title: stringRequiredValidation("Title", 3) },
+			[{ title: "" }],
+		);
+		expect(Object.keys(errors)).toEqual(["title"]);
 	});
 });

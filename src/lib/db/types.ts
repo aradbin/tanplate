@@ -78,6 +78,17 @@ export type WhereParams<T extends TableType> = Pick<
 // per-query custom conditions on top of the basic ones.
 export interface BuilderOptions {
 	client?: DbClient;
+	/**
+	 * Extra WHERE conditions, ANDed with the basic ones.
+	 *
+	 * A condition may reference columns of the **queried table** only. The row
+	 * builder runs these through Drizzle's *relational* query, which rewrites every
+	 * `Column` it finds here to the queried table's alias — so a reference to any
+	 * other table silently compiles to a column of this one. Write those with
+	 * `col()` ([sql.ts](src/lib/db/sql.ts)) instead. `dbCountBuilder`/`dbUpdateBuilder`
+	 * build a plain select and do not rewrite, so a fragment can work there and
+	 * break in the row builder.
+	 */
 	conditions?: SQL[];
 	// When true, the row builder returns a single row via findFirst instead of findMany.
 	first?: boolean;
@@ -110,6 +121,16 @@ export type InsertType<T extends TableType> = (typeof schema)[T] extends {
 }
 	? I
 	: never;
+
+/**
+ * An insert row as a *feature* writes it.
+ *
+ * `organizationId` is absent because `dbInsertBuilder` stamps it from the
+ * request's tenant scope: a feature never names — and cannot choose — the
+ * organization it writes into. Use this wherever a helper builds rows to hand to
+ * the insert builder, instead of the raw `$inferInsert` type.
+ */
+export type NewRow<T> = Omit<T, "organizationId">;
 
 // Everything the insert builder needs comes as props; userId becomes createdBy.
 // `values` is Partial because the builder fills the primary-key `id` itself and

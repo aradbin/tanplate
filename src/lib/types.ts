@@ -23,8 +23,13 @@ export interface NavigationType {
 export interface OptionType {
 	id: string | number;
 	name: string;
+	group?: string | undefined | null;
 	email?: string | undefined | null;
 	phone?: string | undefined | null;
+	// The job title comes from the person's membership of the active organization,
+	// either already flattened onto the row or nested as it was selected.
+	designation?: string | undefined | null;
+	memberships?: { designation?: string | null }[] | null;
 	icon?: ComponentType<{ className?: string }>;
 	image?: string | null;
 }
@@ -35,9 +40,11 @@ export type FieldType =
 	| "password"
 	| "number"
 	| "textarea"
+	| "richtext"
 	| "select"
 	| "switch"
 	| "date"
+	| "datetime"
 	| "user"
 	| "hidden"
 	| "month"

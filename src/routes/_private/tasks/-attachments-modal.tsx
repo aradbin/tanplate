@@ -45,7 +45,7 @@ function attachmentIcon(mime: string) {
 	return <FileIcon />;
 }
 
-const attachmentUrl = (id: string) => `/api/tasks/attachments/${id}`;
+const attachmentUrl = (id: string) => `/api/v1/tasks/attachments/${id}`;
 
 const queryKey = (taskId: string) => ["taskAttachments", taskId];
 

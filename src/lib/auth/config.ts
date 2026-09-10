@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin } from "better-auth/plugins";
+import { organization } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { ac, roles } from "@/lib/auth/permissions";
 import { db } from "@/lib/db";
@@ -13,23 +13,54 @@ export const auth = betterAuth({
 		provider: "pg",
 	}),
 	baseURL: env.VITE_BASE_URL,
-	plugins: [admin({ ac, roles }), tanstackStartCookies()], // make sure tanstackStartCookies is the last plugin in the array
+	// Add better-auth's `bearer()` plugin here to let the `/api/v1` routes
+	// authenticate with `Authorization: Bearer <token>`. `apiAuthMiddleware`
+	// (src/lib/api/middleware.ts) already goes through `auth.api.getSession`, so
+	// no endpoint changes when it lands.
+	plugins: [
+		organization({
+			ac,
+			roles,
+			creatorRole: "owner",
+			allowUserToCreateOrganization: true,
+			// Every domain table carries a NOT NULL `organization_id` that restricts
+			// on delete, which `POST /organization/delete` knows nothing about: the
+			// delete would fail on the constraint, and a cascade would hard-delete an
+			// organization's whole history — rows the app only ever soft-deletes.
+			// Archiving an organization is a feature of its own, not a checkbox.
+			disableOrganizationDeletion: true,
+			// The members page lists an organization's pending invitations, and an
+			// invitation id is action-capable, so require proven mailbox control
+			// before one can be used.
+			requireEmailVerificationOnInvitation: true,
+			sendInvitationEmail: async (data) => {
+				sendEmail({
+					to: data.email,
+					subject: `${data.inviter.user.name} invited you to ${data.organization.name}`,
+					...renderEmail({
+						heading: `Join ${data.organization.name}`,
+						body: [
+							`${data.inviter.user.name} (${data.inviter.user.email}) invited you to join ${data.organization.name}.`,
+							"Click the button below to accept. If you don't have an account yet, you'll be able to create one first.",
+						],
+						action: {
+							label: "Accept invitation",
+							url: `${env.VITE_BASE_URL}/invitations/${data.id}`,
+						},
+					}),
+				}).catch(() => {});
+			},
+		}),
+		tanstackStartCookies(),
+	], // make sure tanstackStartCookies is the last plugin in the array
 	emailAndPassword: {
 		enabled: true,
+		// Open self-serve: an invitee with no account has to be able to register
+		// before they can accept, and anyone may start their own organization.
+		disableSignUp: false,
 		minPasswordLength: 8,
 		requireEmailVerification: true,
 		revokeSessionsOnPasswordReset: true,
-		// Complete enumeration protection: the synthetic success response must
-		// include the admin plugin's user fields so it's indistinguishable from a
-		// real sign-up. Assemble in DB schema order (core -> admin fields -> id).
-		customSyntheticUser: ({ coreFields, id }) => ({
-			...coreFields,
-			role: "user",
-			banned: false,
-			banReason: null,
-			banExpires: null,
-			id,
-		}),
 		onExistingUserSignUp: async ({ user }) => {
 			sendEmail({
 				to: user.email,
@@ -80,9 +111,46 @@ export const auth = betterAuth({
 			}).catch(() => {});
 		},
 	},
+	databaseHooks: {
+		session: {
+			create: {
+				/**
+				 * Point a new session at the user's first organization.
+				 *
+				 * The plugin leaves `activeOrganizationId` null on sign-in, and a null
+				 * one means "no tenant" everywhere downstream — so without this an
+				 * existing member would land on onboarding every time they log in.
+				 * Read directly rather than through the generic builders: `member` is
+				 * tenant-scoped, and there is no tenant established yet.
+				 */
+				before: async (session) => {
+					const membership = await db.query.member.findFirst({
+						where: (row, { eq }) => eq(row.userId, session.userId),
+						orderBy: (row, { asc }) => [asc(row.createdAt)],
+					});
+
+					return {
+						data: {
+							...session,
+							activeOrganizationId: membership?.organizationId ?? null,
+						},
+					};
+				},
+			},
+		},
+	},
 	trustedOrigins: [env.VITE_BASE_URL],
 	advanced: {
 		cookiePrefix: "auth",
+		ipAddress: {
+			// Behind the Caddy reverse proxy every request reaches the app from the
+			// proxy's address, so rate limiting would lump all clients into one
+			// bucket. Caddy sets X-Forwarded-For, and the app only listens on
+			// loopback behind it, so the header can be trusted. If the app is ever
+			// exposed directly, drop this — a client could then spoof the header to
+			// dodge the limit.
+			ipAddressHeaders: ["x-forwarded-for"],
+		},
 	},
 	session: {
 		expiresIn: 60 * 60 * 24 * 7,

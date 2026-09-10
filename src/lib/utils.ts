@@ -97,6 +97,26 @@ export const formatDate = (date: AnyType) => {
 	return format(new Date(date), "do MMM, yyyy");
 };
 
+export const formatTime = (date: AnyType) => {
+	if (!date || !isValid(new Date(date))) return "";
+	return format(new Date(date), "hh:mm a");
+};
+
+/**
+ * A span of minutes in the largest unit that still reads exactly: `"45 min"`
+ * under the hour, `"2 hr"` on the hour, `"1 hr 30 min"` in between. Returns an
+ * empty string for a missing or non-positive span, so a caller can render it
+ * unguarded.
+ */
+export const formatMinutes = (minutes: number | null | undefined): string => {
+	if (!minutes || minutes <= 0) return "";
+	if (minutes < 60) return `${minutes} min`;
+
+	const hours = Math.floor(minutes / 60);
+	const rest = minutes % 60;
+	return rest ? `${hours} hr ${rest} min` : `${hours} hr`;
+};
+
 export const formatDateForInput = (date: AnyType) => {
 	if (!date || !isValid(new Date(date))) return "";
 	return format(new Date(date), "yyyy-MM-dd");
@@ -117,6 +137,35 @@ const URL_PATTERN =
 	/^(https?:\/\/)?((([\da-z]([a-z\d-]*[\da-z])*)\.)+[a-z]{2,}|((\d{1,3}\.){3}\d{1,3}))(:\d+)?(\/[-a-z\d%_.~+]*)*(\?[;&a-z\d%_.~+=-]*)?(#[-a-z\d_]*)?$/i;
 
 export const isUrl = (string: string) => URL_PATTERN.test(string);
+
+/**
+ * A user-typed URL turned into one that is safe to put in an `href`, or
+ * `undefined` when it is not a web address at all.
+ *
+ * A bare `meet.google.com/abc-defg` is accepted and gains `https://` — a field
+ * asking for a link is routinely filled without the scheme — while anything on
+ * another scheme is rejected, which is what keeps a `javascript:` payload out of
+ * a link rendered from stored text.
+ */
+export const normalizeUrl = (
+	value: string | null | undefined,
+): string | undefined => {
+	const trimmed = value?.trim();
+	if (!trimmed) return undefined;
+
+	const candidate = /^[a-z][a-z\d+\-.]*:/i.test(trimmed)
+		? trimmed
+		: `https://${trimmed}`;
+
+	try {
+		const url = new URL(candidate);
+		return url.protocol === "http:" || url.protocol === "https:"
+			? url.href
+			: undefined;
+	} catch {
+		return undefined;
+	}
+};
 
 export const formatCurrency = (amount: AnyType, currency?: string) => {
 	if (amount === null || amount === undefined || Number.isNaN(amount))
@@ -142,14 +191,44 @@ export const formatBytes = (bytes: number | null | undefined): string => {
 	return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
 };
 
+/**
+ * A URL-safe slug: lowercase, every run of non-alphanumerics collapsed to a
+ * single hyphen, no hyphen at either end.
+ *
+ * Shared rather than duplicated because the create-organization form previews
+ * the slug while the name is typed and the server derives the same slug when the
+ * field is left blank — two implementations would drift and show one thing while
+ * saving another.
+ */
 export const slugify = (str: string) => {
 	return str
 		.toLowerCase()
-		.trim()
-		.replace(/[^\w\s-]/g, "") // Remove non-word chars (except spaces & hyphens)
-		.replace(/\s+/g, "-") // Replace spaces with hyphens
-		.replace(/-+/g, "-"); // Replace multiple hyphens with single hyphen
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "")
+		.slice(0, 48);
 };
+
+/**
+ * A source of client-side row ids for a variable-length list editor, handed out
+ * when a row is created and kept for the life of that editor.
+ *
+ * Deliberately not the array index, which changes under a row whenever one above
+ * it moves or is removed, and not the persisted id, which a row added in this
+ * session does not have yet. React keys, drag handles and touched-field sets all
+ * hang off this, so an index only ever means position.
+ *
+ * A factory rather than one shared counter: each editor gets its own sequence, so
+ * the ids a server render mints are the ids hydration mints, whatever else on the
+ * page also numbers rows.
+ */
+export function rowIdFactory(prefix: string) {
+	let seed = 0;
+
+	return () => {
+		seed += 1;
+		return `${prefix}-${seed}`;
+	};
+}
 
 export const normalizePhone = (phone: string | null | undefined): string => {
 	if (!phone) return "";

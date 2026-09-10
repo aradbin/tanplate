@@ -1,15 +1,16 @@
 import {
+	effectiveRole,
 	hasPermission,
 	type PermissionCheck,
-	type RoleType,
 } from "@/lib/auth/permissions";
 import { useAuth } from "@/providers/auth-provider";
 
 export function usePermissions() {
 	const { user } = useAuth();
-	// Fall back to "user" (most-restricted role) so permission checks fail gracefully
-	// for unauthenticated visitors or accounts without a role set, rather than throwing.
-	const role = (user?.role ?? "user") as RoleType;
+	// The member role in the *active* organization. Null for a visitor, or for an
+	// account with no active membership — both deny every check rather than
+	// falling back to a role that grants something.
+	const role = effectiveRole(user);
 
 	return {
 		role,

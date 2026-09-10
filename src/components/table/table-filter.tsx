@@ -19,6 +19,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { designationOf } from "@/lib/organization/person";
 import type { AnyType, TableFilterType } from "@/lib/types";
 import { capitalize, cn, formatDate, formatDateForInput } from "@/lib/utils";
 import AvatarComponent from "../common/avatar-component";
@@ -44,7 +45,7 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 
 	const filteredOptions = filterSearch
 		? (filter?.options?.filter((o) =>
-				`${o?.name ?? ""} ${o?.email ?? ""}`
+				`${o?.name ?? ""} ${o?.email ?? ""} ${designationOf(o) ?? ""}`
 					.toLowerCase()
 					.includes(filterSearch.toLowerCase()),
 			) ?? [])
@@ -262,9 +263,9 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 											key={option.id}
 											ref={virtualizer.measureElement}
 											data-index={virtualItem.index}
-											value={`${option?.name ?? ""} ${option?.email ?? ""}`}
+											value={`${option?.name ?? ""} ${option?.email ?? ""} ${designationOf(option) ?? ""}`}
 											onSelect={() => onSelect(option.id)}
-											className="flex items-center justify-between"
+											className="flex items-center justify-between gap-2"
 											style={{
 												position: "absolute",
 												top: 0,
@@ -273,11 +274,13 @@ export function TableFilter({ filter }: { filter: TableFilterType }) {
 												transform: `translateY(${virtualItem.start}px)`,
 											}}
 										>
-											{filter?.type === "user" ? (
-												<AvatarComponent user={option} />
-											) : (
-												<OptionComponent option={option} />
-											)}
+											<div className="min-w-0 flex-1">
+												{filter?.type === "user" ? (
+													<AvatarComponent user={option} />
+												) : (
+													<OptionComponent option={option} />
+												)}
+											</div>
 											<Check
 												className={cn(
 													"h-4 w-4",

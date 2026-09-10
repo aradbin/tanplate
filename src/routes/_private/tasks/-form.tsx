@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import ModalComponent from "@/components/common/modal-component";
 import FormComponent from "@/components/form/form-component";
 import type { AnyType, FormFieldType, ModalStateType } from "@/lib/types";
-import { stringRequiredValidation, stringValidation } from "@/lib/validations";
+import {
+	richTextValidation,
+	stringRequiredValidation,
+} from "@/lib/validations";
 import { taskStatusOptions } from "@/lib/variables";
 import { useAuth } from "@/providers/auth-provider";
 import { createTask, getTask, updateTask } from "./-functions";
@@ -50,8 +53,8 @@ export default function TaskForm({
 		[
 			{
 				name: "description",
-				type: "textarea",
-				validationOnSubmit: stringValidation("Description", 1000),
+				type: "richtext",
+				validationOnSubmit: richTextValidation("Description", 1000),
 				placeholder: "Enter task description",
 			},
 		],

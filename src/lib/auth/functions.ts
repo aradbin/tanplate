@@ -3,6 +3,7 @@ import { getRequestHeaders } from "@tanstack/react-start/server";
 import type { AnyType } from "../types";
 import { authClient } from "./client";
 import { auth } from "./config";
+import { resolveActor } from "./session";
 
 export function verificationCallbackURL(redirect?: string): string {
 	const params = new URLSearchParams({ verified: "true" });
@@ -121,14 +122,49 @@ export const changePassword = createServerFn({ method: "POST" })
 		return { message: "Password changed successfully" };
 	});
 
+/**
+ * The single source of the current user on the client, resolved on router
+ * context by the root route.
+ *
+ * Returns the *actor*, not the bare session user: `usePermissions` and every
+ * `requirePermission` guard read the member role in the active organization, so
+ * returning only `response.user` would leave the client with no role and no
+ * tenant at all.
+ */
 export const getAuth = createServerFn().handler(async () => {
 	const headers = getRequestHeaders();
 	const response = await auth.api.getSession({ headers });
 
 	if (response?.user) {
-		return {
-			...response?.user,
-		};
+		return await resolveActor(response);
+	}
+
+	return null;
+});
+
+/**
+ * Re-read the session, bypassing the cookie cache.
+ *
+ * `session.cookieCache` serves a signed copy of the session for five minutes, and
+ * better-auth updates the session **row** — not that copy — when the active
+ * organization changes. Creating an organization, accepting an invitation and
+ * switching all go through `updateSession`, so the cached session still names the
+ * old organization (or none) right after the thing that changed it.
+ *
+ * Reading with the cache disabled returns the truth *and* rewrites the cookie
+ * (`setCookieCache` in better-auth's session route), so ordinary cached reads are
+ * correct from then on. Call it wherever the active organization may just have
+ * changed — which is exactly what `useAuth().refetch()` means.
+ */
+export const refreshAuth = createServerFn().handler(async () => {
+	const headers = getRequestHeaders();
+	const response = await auth.api.getSession({
+		headers,
+		query: { disableCookieCache: true },
+	});
+
+	if (response?.user) {
+		return await resolveActor(response);
 	}
 
 	return null;

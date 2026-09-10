@@ -35,6 +35,22 @@ const collectSearchKeys = (
 	return keysByHref;
 };
 
+/**
+ * Active-state override for `SidebarMenuButton`. The shadcn base variant only ships
+ * `data-active:bg-sidebar-accent`, ~2% lightness away from the sidebar background, which
+ * reads as not-active at a glance. These land after the cva string in `cn()`, so
+ * tailwind-merge resolves the bg/text/font conflicts in our favor — `ui/sidebar.tsx` is
+ * shadcn-generated and stays untouched.
+ */
+const activeMenuButtonClass = [
+	"data-active:bg-primary/10",
+	"data-active:text-primary",
+	// The base string's bare `hover:bg-sidebar-accent` would wash the tint out; a stacked
+	// variant has higher specificity, so it wins regardless of generated rule order.
+	"data-active:hover:bg-primary/15",
+	"data-active:hover:text-primary",
+].join(" ");
+
 export function NavMain() {
 	const { openMobile, setOpenMobile } = useSidebar();
 	const { hasPermission } = usePermissions();
@@ -102,6 +118,7 @@ export function NavMain() {
 		return (
 			<SidebarMenuButton
 				tooltip={item?.title}
+				className={activeMenuButtonClass}
 				onClick={() => setOpenMobile(!openMobile)}
 				render={
 					<Link to={item?.href} search={(item?.search ?? {}) as AnyType} />

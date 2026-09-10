@@ -1,0 +1,24 @@
+{
+	# Address Let's Encrypt sends certificate expiry notices to.
+	email you@example.com
+
+	# Uncomment while first wiring up DNS. Let's Encrypt allows only 5 failed
+	# validations per hostname per hour, and a typo in an A record burns them
+	# quickly; staging has no such limit. The browser will warn about the
+	# resulting cert — that warning is the signal the plumbing works. Remove the
+	# line and `docker compose restart caddy` to get a real cert.
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# The app. Caddy sets X-Forwarded-For/Proto/Host and passes `Upgrade` through on
+# its own, so websockets need no directives here, and better-auth reads the
+# client IP from X-Forwarded-For (`advanced.ipAddress` in src/lib/auth/config.ts)
+# so rate limiting stays per client. There is also no default request-body cap,
+# which file uploads depend on.
+#
+# Replace the hostname with your own; it must resolve to this host for Let's
+# Encrypt to issue a certificate. Set VITE_BASE_URL to the same https origin.
+app.example.com {
+	encode zstd gzip
+	reverse_proxy app:3000
+}

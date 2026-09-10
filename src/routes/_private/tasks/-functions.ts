@@ -9,10 +9,11 @@ import {
 } from "@/lib/db/functions";
 import type { Task, User } from "@/lib/db/schema";
 import type { QueryInputType, QueryParamType } from "@/lib/db/types";
+import { sanitizeRichText } from "@/lib/rich-text";
 import {
 	queryInputValidation,
+	richTextValidation,
 	stringRequiredValidation,
-	stringValidation,
 	validate,
 } from "@/lib/validations";
 
@@ -25,7 +26,7 @@ export const createTaskValidator = validate({
 	status: stringRequiredValidation("Status"),
 	dueDate: stringRequiredValidation("Due Date"),
 	userId: stringRequiredValidation("User"),
-	description: stringValidation("Description", 1000),
+	description: richTextValidation("Description", 1000),
 });
 
 export const updateTaskValidator = validate({
@@ -34,7 +35,7 @@ export const updateTaskValidator = validate({
 	status: stringRequiredValidation("Status"),
 	dueDate: stringRequiredValidation("Due Date"),
 	userId: stringRequiredValidation("User"),
-	description: stringValidation("Description", 1000),
+	description: richTextValidation("Description", 1000),
 });
 
 function buildTaskQuery(data: QueryInputType): QueryParamType<"tasks"> {
@@ -91,7 +92,7 @@ export const createTask = createServerFn({ method: "POST" })
 	.handler(async ({ data, context }) => {
 		const [row] = await dbInsertBuilder({
 			table: "tasks",
-			values: data,
+			values: { ...data, description: sanitizeRichText(data.description) },
 			userId: context.user.id,
 		});
 
@@ -108,7 +109,7 @@ export const updateTask = createServerFn({ method: "POST" })
 		const { id, ...values } = data;
 		const [row] = await dbUpdateBuilder({
 			table: "tasks",
-			values,
+			values: { ...values, description: sanitizeRichText(values.description) },
 			where: { id },
 			userId: context.user.id,
 		});

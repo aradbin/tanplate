@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateId } from "better-auth";
+import { attachmentKey, writeAttachment } from "@/lib/attachments/store";
 import { authMiddleware } from "@/lib/auth/middlewares";
 import {
 	dbDeleteBuilder,
@@ -14,7 +15,6 @@ import {
 	validate,
 } from "@/lib/validations";
 import { maxAttachmentBytes } from "@/lib/variables";
-import { attachmentKey, writeAttachment } from "./-attachment-store";
 
 export type { TaskAttachment };
 

@@ -12,17 +12,23 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PrivateRouteRouteImport } from './routes/_private/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as PrivateIndexRouteImport } from './routes/_private/index'
-import { Route as PrivateUsersIndexRouteImport } from './routes/_private/users/index'
+import { Route as PrivateSettingsRouteRouteImport } from './routes/_private/settings/route'
+import { Route as InvitationsIdIndexRouteImport } from './routes/invitations/$id/index'
 import { Route as PrivateTasksIndexRouteImport } from './routes/_private/tasks/index'
+import { Route as PrivateSettingsIndexRouteImport } from './routes/_private/settings/index'
 import { Route as PrivateProfileIndexRouteImport } from './routes/_private/profile/index'
 import { Route as AuthVerifyIndexRouteImport } from './routes/_auth/verify/index'
 import { Route as AuthRegisterIndexRouteImport } from './routes/_auth/register/index'
 import { Route as AuthLoginIndexRouteImport } from './routes/_auth/login/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as PrivateUsersEmailIndexRouteImport } from './routes/_private/users/$email/index'
+import { Route as PrivateSettingsOrganizationIndexRouteImport } from './routes/_private/settings/organization/index'
+import { Route as PrivateSettingsMembersIndexRouteImport } from './routes/_private/settings/members/index'
 import { Route as AuthPasswordResetIndexRouteImport } from './routes/_auth/password/reset/index'
 import { Route as AuthPasswordForgotIndexRouteImport } from './routes/_auth/password/forgot/index'
-import { Route as ApiTasksAttachmentsIdRouteImport } from './routes/api/tasks/attachments/$id'
+import { Route as ApiV1AvatarsFileRouteImport } from './routes/api/v1/avatars/$file'
+import { Route as PrivateSettingsOrganizationCreateIndexRouteImport } from './routes/_private/settings/organization/create/index'
+import { Route as PrivateSettingsMembersEmailIndexRouteImport } from './routes/_private/settings/members/$email/index'
+import { Route as ApiV1TasksAttachmentsIdRouteImport } from './routes/api/v1/tasks/attachments/$id'
 
 const PrivateRouteRoute = PrivateRouteRouteImport.update({
   id: '/_private',
@@ -37,15 +43,25 @@ const PrivateIndexRoute = PrivateIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PrivateRouteRoute,
 } as any)
-const PrivateUsersIndexRoute = PrivateUsersIndexRouteImport.update({
-  id: '/users/',
-  path: '/users/',
+const PrivateSettingsRouteRoute = PrivateSettingsRouteRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => PrivateRouteRoute,
+} as any)
+const InvitationsIdIndexRoute = InvitationsIdIndexRouteImport.update({
+  id: '/invitations/$id/',
+  path: '/invitations/$id/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PrivateTasksIndexRoute = PrivateTasksIndexRouteImport.update({
   id: '/tasks/',
   path: '/tasks/',
   getParentRoute: () => PrivateRouteRoute,
+} as any)
+const PrivateSettingsIndexRoute = PrivateSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PrivateSettingsRouteRoute,
 } as any)
 const PrivateProfileIndexRoute = PrivateProfileIndexRouteImport.update({
   id: '/profile/',
@@ -72,11 +88,18 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PrivateUsersEmailIndexRoute = PrivateUsersEmailIndexRouteImport.update({
-  id: '/users/$email/',
-  path: '/users/$email/',
-  getParentRoute: () => PrivateRouteRoute,
-} as any)
+const PrivateSettingsOrganizationIndexRoute =
+  PrivateSettingsOrganizationIndexRouteImport.update({
+    id: '/organization/',
+    path: '/organization/',
+    getParentRoute: () => PrivateSettingsRouteRoute,
+  } as any)
+const PrivateSettingsMembersIndexRoute =
+  PrivateSettingsMembersIndexRouteImport.update({
+    id: '/members/',
+    path: '/members/',
+    getParentRoute: () => PrivateSettingsRouteRoute,
+  } as any)
 const AuthPasswordResetIndexRoute = AuthPasswordResetIndexRouteImport.update({
   id: '/password/reset/',
   path: '/password/reset/',
@@ -87,25 +110,48 @@ const AuthPasswordForgotIndexRoute = AuthPasswordForgotIndexRouteImport.update({
   path: '/password/forgot/',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const ApiTasksAttachmentsIdRoute = ApiTasksAttachmentsIdRouteImport.update({
-  id: '/api/tasks/attachments/$id',
-  path: '/api/tasks/attachments/$id',
+const ApiV1AvatarsFileRoute = ApiV1AvatarsFileRouteImport.update({
+  id: '/api/v1/avatars/$file',
+  path: '/api/v1/avatars/$file',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivateSettingsOrganizationCreateIndexRoute =
+  PrivateSettingsOrganizationCreateIndexRouteImport.update({
+    id: '/organization/create/',
+    path: '/organization/create/',
+    getParentRoute: () => PrivateSettingsRouteRoute,
+  } as any)
+const PrivateSettingsMembersEmailIndexRoute =
+  PrivateSettingsMembersEmailIndexRouteImport.update({
+    id: '/members/$email/',
+    path: '/members/$email/',
+    getParentRoute: () => PrivateSettingsRouteRoute,
+  } as any)
+const ApiV1TasksAttachmentsIdRoute = ApiV1TasksAttachmentsIdRouteImport.update({
+  id: '/api/v1/tasks/attachments/$id',
+  path: '/api/v1/tasks/attachments/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PrivateIndexRoute
+  '/settings': typeof PrivateSettingsRouteRouteWithChildren
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/login/': typeof AuthLoginIndexRoute
   '/register/': typeof AuthRegisterIndexRoute
   '/verify/': typeof AuthVerifyIndexRoute
   '/profile/': typeof PrivateProfileIndexRoute
+  '/settings/': typeof PrivateSettingsIndexRoute
   '/tasks/': typeof PrivateTasksIndexRoute
-  '/users/': typeof PrivateUsersIndexRoute
-  '/api/tasks/attachments/$id': typeof ApiTasksAttachmentsIdRoute
+  '/invitations/$id/': typeof InvitationsIdIndexRoute
+  '/api/v1/avatars/$file': typeof ApiV1AvatarsFileRoute
   '/password/forgot/': typeof AuthPasswordForgotIndexRoute
   '/password/reset/': typeof AuthPasswordResetIndexRoute
-  '/users/$email/': typeof PrivateUsersEmailIndexRoute
+  '/settings/members/': typeof PrivateSettingsMembersIndexRoute
+  '/settings/organization/': typeof PrivateSettingsOrganizationIndexRoute
+  '/api/v1/tasks/attachments/$id': typeof ApiV1TasksAttachmentsIdRoute
+  '/settings/members/$email/': typeof PrivateSettingsMembersEmailIndexRoute
+  '/settings/organization/create/': typeof PrivateSettingsOrganizationCreateIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PrivateIndexRoute
@@ -114,45 +160,62 @@ export interface FileRoutesByTo {
   '/register': typeof AuthRegisterIndexRoute
   '/verify': typeof AuthVerifyIndexRoute
   '/profile': typeof PrivateProfileIndexRoute
+  '/settings': typeof PrivateSettingsIndexRoute
   '/tasks': typeof PrivateTasksIndexRoute
-  '/users': typeof PrivateUsersIndexRoute
-  '/api/tasks/attachments/$id': typeof ApiTasksAttachmentsIdRoute
+  '/invitations/$id': typeof InvitationsIdIndexRoute
+  '/api/v1/avatars/$file': typeof ApiV1AvatarsFileRoute
   '/password/forgot': typeof AuthPasswordForgotIndexRoute
   '/password/reset': typeof AuthPasswordResetIndexRoute
-  '/users/$email': typeof PrivateUsersEmailIndexRoute
+  '/settings/members': typeof PrivateSettingsMembersIndexRoute
+  '/settings/organization': typeof PrivateSettingsOrganizationIndexRoute
+  '/api/v1/tasks/attachments/$id': typeof ApiV1TasksAttachmentsIdRoute
+  '/settings/members/$email': typeof PrivateSettingsMembersEmailIndexRoute
+  '/settings/organization/create': typeof PrivateSettingsOrganizationCreateIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_private': typeof PrivateRouteRouteWithChildren
+  '/_private/settings': typeof PrivateSettingsRouteRouteWithChildren
   '/_private/': typeof PrivateIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_auth/login/': typeof AuthLoginIndexRoute
   '/_auth/register/': typeof AuthRegisterIndexRoute
   '/_auth/verify/': typeof AuthVerifyIndexRoute
   '/_private/profile/': typeof PrivateProfileIndexRoute
+  '/_private/settings/': typeof PrivateSettingsIndexRoute
   '/_private/tasks/': typeof PrivateTasksIndexRoute
-  '/_private/users/': typeof PrivateUsersIndexRoute
-  '/api/tasks/attachments/$id': typeof ApiTasksAttachmentsIdRoute
+  '/invitations/$id/': typeof InvitationsIdIndexRoute
+  '/api/v1/avatars/$file': typeof ApiV1AvatarsFileRoute
   '/_auth/password/forgot/': typeof AuthPasswordForgotIndexRoute
   '/_auth/password/reset/': typeof AuthPasswordResetIndexRoute
-  '/_private/users/$email/': typeof PrivateUsersEmailIndexRoute
+  '/_private/settings/members/': typeof PrivateSettingsMembersIndexRoute
+  '/_private/settings/organization/': typeof PrivateSettingsOrganizationIndexRoute
+  '/api/v1/tasks/attachments/$id': typeof ApiV1TasksAttachmentsIdRoute
+  '/_private/settings/members/$email/': typeof PrivateSettingsMembersEmailIndexRoute
+  '/_private/settings/organization/create/': typeof PrivateSettingsOrganizationCreateIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/settings'
     | '/api/auth/$'
     | '/login/'
     | '/register/'
     | '/verify/'
     | '/profile/'
+    | '/settings/'
     | '/tasks/'
-    | '/users/'
-    | '/api/tasks/attachments/$id'
+    | '/invitations/$id/'
+    | '/api/v1/avatars/$file'
     | '/password/forgot/'
     | '/password/reset/'
-    | '/users/$email/'
+    | '/settings/members/'
+    | '/settings/organization/'
+    | '/api/v1/tasks/attachments/$id'
+    | '/settings/members/$email/'
+    | '/settings/organization/create/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,35 +224,48 @@ export interface FileRouteTypes {
     | '/register'
     | '/verify'
     | '/profile'
+    | '/settings'
     | '/tasks'
-    | '/users'
-    | '/api/tasks/attachments/$id'
+    | '/invitations/$id'
+    | '/api/v1/avatars/$file'
     | '/password/forgot'
     | '/password/reset'
-    | '/users/$email'
+    | '/settings/members'
+    | '/settings/organization'
+    | '/api/v1/tasks/attachments/$id'
+    | '/settings/members/$email'
+    | '/settings/organization/create'
   id:
     | '__root__'
     | '/_auth'
     | '/_private'
+    | '/_private/settings'
     | '/_private/'
     | '/api/auth/$'
     | '/_auth/login/'
     | '/_auth/register/'
     | '/_auth/verify/'
     | '/_private/profile/'
+    | '/_private/settings/'
     | '/_private/tasks/'
-    | '/_private/users/'
-    | '/api/tasks/attachments/$id'
+    | '/invitations/$id/'
+    | '/api/v1/avatars/$file'
     | '/_auth/password/forgot/'
     | '/_auth/password/reset/'
-    | '/_private/users/$email/'
+    | '/_private/settings/members/'
+    | '/_private/settings/organization/'
+    | '/api/v1/tasks/attachments/$id'
+    | '/_private/settings/members/$email/'
+    | '/_private/settings/organization/create/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   PrivateRouteRoute: typeof PrivateRouteRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  ApiTasksAttachmentsIdRoute: typeof ApiTasksAttachmentsIdRoute
+  InvitationsIdIndexRoute: typeof InvitationsIdIndexRoute
+  ApiV1AvatarsFileRoute: typeof ApiV1AvatarsFileRoute
+  ApiV1TasksAttachmentsIdRoute: typeof ApiV1TasksAttachmentsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -215,12 +291,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivateIndexRouteImport
       parentRoute: typeof PrivateRouteRoute
     }
-    '/_private/users/': {
-      id: '/_private/users/'
-      path: '/users'
-      fullPath: '/users/'
-      preLoaderRoute: typeof PrivateUsersIndexRouteImport
+    '/_private/settings': {
+      id: '/_private/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof PrivateSettingsRouteRouteImport
       parentRoute: typeof PrivateRouteRoute
+    }
+    '/invitations/$id/': {
+      id: '/invitations/$id/'
+      path: '/invitations/$id'
+      fullPath: '/invitations/$id/'
+      preLoaderRoute: typeof InvitationsIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_private/tasks/': {
       id: '/_private/tasks/'
@@ -228,6 +311,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/tasks/'
       preLoaderRoute: typeof PrivateTasksIndexRouteImport
       parentRoute: typeof PrivateRouteRoute
+    }
+    '/_private/settings/': {
+      id: '/_private/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof PrivateSettingsIndexRouteImport
+      parentRoute: typeof PrivateSettingsRouteRoute
     }
     '/_private/profile/': {
       id: '/_private/profile/'
@@ -264,12 +354,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_private/users/$email/': {
-      id: '/_private/users/$email/'
-      path: '/users/$email'
-      fullPath: '/users/$email/'
-      preLoaderRoute: typeof PrivateUsersEmailIndexRouteImport
-      parentRoute: typeof PrivateRouteRoute
+    '/_private/settings/organization/': {
+      id: '/_private/settings/organization/'
+      path: '/organization'
+      fullPath: '/settings/organization/'
+      preLoaderRoute: typeof PrivateSettingsOrganizationIndexRouteImport
+      parentRoute: typeof PrivateSettingsRouteRoute
+    }
+    '/_private/settings/members/': {
+      id: '/_private/settings/members/'
+      path: '/members'
+      fullPath: '/settings/members/'
+      preLoaderRoute: typeof PrivateSettingsMembersIndexRouteImport
+      parentRoute: typeof PrivateSettingsRouteRoute
     }
     '/_auth/password/reset/': {
       id: '/_auth/password/reset/'
@@ -285,11 +382,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPasswordForgotIndexRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/api/tasks/attachments/$id': {
-      id: '/api/tasks/attachments/$id'
-      path: '/api/tasks/attachments/$id'
-      fullPath: '/api/tasks/attachments/$id'
-      preLoaderRoute: typeof ApiTasksAttachmentsIdRouteImport
+    '/api/v1/avatars/$file': {
+      id: '/api/v1/avatars/$file'
+      path: '/api/v1/avatars/$file'
+      fullPath: '/api/v1/avatars/$file'
+      preLoaderRoute: typeof ApiV1AvatarsFileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_private/settings/organization/create/': {
+      id: '/_private/settings/organization/create/'
+      path: '/organization/create'
+      fullPath: '/settings/organization/create/'
+      preLoaderRoute: typeof PrivateSettingsOrganizationCreateIndexRouteImport
+      parentRoute: typeof PrivateSettingsRouteRoute
+    }
+    '/_private/settings/members/$email/': {
+      id: '/_private/settings/members/$email/'
+      path: '/members/$email'
+      fullPath: '/settings/members/$email/'
+      preLoaderRoute: typeof PrivateSettingsMembersEmailIndexRouteImport
+      parentRoute: typeof PrivateSettingsRouteRoute
+    }
+    '/api/v1/tasks/attachments/$id': {
+      id: '/api/v1/tasks/attachments/$id'
+      path: '/api/v1/tasks/attachments/$id'
+      fullPath: '/api/v1/tasks/attachments/$id'
+      preLoaderRoute: typeof ApiV1TasksAttachmentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -315,20 +433,38 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
   AuthRouteRouteChildren,
 )
 
+interface PrivateSettingsRouteRouteChildren {
+  PrivateSettingsIndexRoute: typeof PrivateSettingsIndexRoute
+  PrivateSettingsMembersIndexRoute: typeof PrivateSettingsMembersIndexRoute
+  PrivateSettingsOrganizationIndexRoute: typeof PrivateSettingsOrganizationIndexRoute
+  PrivateSettingsMembersEmailIndexRoute: typeof PrivateSettingsMembersEmailIndexRoute
+  PrivateSettingsOrganizationCreateIndexRoute: typeof PrivateSettingsOrganizationCreateIndexRoute
+}
+
+const PrivateSettingsRouteRouteChildren: PrivateSettingsRouteRouteChildren = {
+  PrivateSettingsIndexRoute: PrivateSettingsIndexRoute,
+  PrivateSettingsMembersIndexRoute: PrivateSettingsMembersIndexRoute,
+  PrivateSettingsOrganizationIndexRoute: PrivateSettingsOrganizationIndexRoute,
+  PrivateSettingsMembersEmailIndexRoute: PrivateSettingsMembersEmailIndexRoute,
+  PrivateSettingsOrganizationCreateIndexRoute:
+    PrivateSettingsOrganizationCreateIndexRoute,
+}
+
+const PrivateSettingsRouteRouteWithChildren =
+  PrivateSettingsRouteRoute._addFileChildren(PrivateSettingsRouteRouteChildren)
+
 interface PrivateRouteRouteChildren {
+  PrivateSettingsRouteRoute: typeof PrivateSettingsRouteRouteWithChildren
   PrivateIndexRoute: typeof PrivateIndexRoute
   PrivateProfileIndexRoute: typeof PrivateProfileIndexRoute
   PrivateTasksIndexRoute: typeof PrivateTasksIndexRoute
-  PrivateUsersIndexRoute: typeof PrivateUsersIndexRoute
-  PrivateUsersEmailIndexRoute: typeof PrivateUsersEmailIndexRoute
 }
 
 const PrivateRouteRouteChildren: PrivateRouteRouteChildren = {
+  PrivateSettingsRouteRoute: PrivateSettingsRouteRouteWithChildren,
   PrivateIndexRoute: PrivateIndexRoute,
   PrivateProfileIndexRoute: PrivateProfileIndexRoute,
   PrivateTasksIndexRoute: PrivateTasksIndexRoute,
-  PrivateUsersIndexRoute: PrivateUsersIndexRoute,
-  PrivateUsersEmailIndexRoute: PrivateUsersEmailIndexRoute,
 }
 
 const PrivateRouteRouteWithChildren = PrivateRouteRoute._addFileChildren(
@@ -339,17 +475,20 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   PrivateRouteRoute: PrivateRouteRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  ApiTasksAttachmentsIdRoute: ApiTasksAttachmentsIdRoute,
+  InvitationsIdIndexRoute: InvitationsIdIndexRoute,
+  ApiV1AvatarsFileRoute: ApiV1AvatarsFileRoute,
+  ApiV1TasksAttachmentsIdRoute: ApiV1TasksAttachmentsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

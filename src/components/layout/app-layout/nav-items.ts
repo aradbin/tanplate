@@ -1,4 +1,4 @@
-import { LayoutGrid, ListChecks, Users } from "lucide-react";
+import { LayoutGrid, ListChecks, Settings } from "lucide-react";
 import type { NavItemType, NavigationType } from "@/lib/types";
 
 export const mainNavItems = (): NavigationType[] => [
@@ -19,13 +19,16 @@ export const mainNavItems = (): NavigationType[] => [
 		],
 	},
 	{
-		title: "User Management",
+		title: "Settings",
 		items: [
 			{
-				title: "Users",
-				href: "/users",
-				icon: Users,
-				permission: { user: ["list"] },
+				title: "Settings",
+				href: "/settings",
+				icon: Settings,
+				// The loosest gate any settings page carries, so the entry appears for
+				// everyone who has somewhere to land once `/settings` resolves them to
+				// their first permitted section.
+				permission: { member: ["create"] },
 			},
 		],
 	},

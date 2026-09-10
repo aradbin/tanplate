@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 
 import { env } from "@/lib/env";
+import { htmlToPlainText } from "@/lib/rich-text";
 
 const APP_NAME = "Tanplate";
 const SMTP_USER = env.SMTP_USER;
@@ -16,24 +17,6 @@ const transporter = nodemailer.createTransport({
 		pass: env.SMTP_PASS,
 	},
 });
-
-/** Strip HTML down to a readable plain-text fallback. */
-function htmlToText(html: string) {
-	return html
-		.replace(/<style[\s\S]*?<\/style>/gi, "")
-		.replace(/<head[\s\S]*?<\/head>/gi, "")
-		.replace(/<(?:br|\/p|\/div|\/tr|\/h[1-6])\s*\/?>/gi, "\n")
-		.replace(/<[^>]+>/g, "")
-		.replace(/&nbsp;/gi, " ")
-		.replace(/&amp;/gi, "&")
-		.replace(/&lt;/gi, "<")
-		.replace(/&gt;/gi, ">")
-		.replace(/\n{3,}/g, "\n\n")
-		.split("\n")
-		.map((line) => line.trim())
-		.join("\n")
-		.trim();
-}
 
 export async function sendEmail({
 	to,
@@ -57,7 +40,7 @@ export async function sendEmail({
 			to,
 			subject,
 			html,
-			text: text ?? htmlToText(html),
+			text: text ?? htmlToPlainText(html),
 			replyTo,
 			headers: {
 				"List-Unsubscribe": `<mailto:${SMTP_USER}?subject=unsubscribe>`,

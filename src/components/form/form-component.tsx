@@ -72,6 +72,7 @@ export default function FormComponent({
 		loadingText?: string;
 		btnWidth?: string;
 		submitVariant?: "default" | "destructive";
+		keepValues?: boolean;
 		formClassNames?: string;
 	};
 }) {
@@ -167,7 +168,7 @@ export default function FormComponent({
 				if (onSuccess) {
 					await onSuccess(response);
 				}
-				form.reset();
+				form.reset(options?.keepValues ? value : undefined);
 			} catch (error) {
 				if (onError) {
 					onError(error);

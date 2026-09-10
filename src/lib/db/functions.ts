@@ -17,6 +17,7 @@ import type { AnyType } from "@/lib/types";
 import { defaultPageSize, maxPageSize } from "@/lib/variables";
 import { db } from ".";
 import * as schema from "./schema";
+import { currentTenant, requireTenantId } from "./tenant";
 import type {
 	BuilderOptions,
 	DbCountBuilder,
@@ -30,9 +31,30 @@ import type {
 
 const tables = schema as unknown as Record<TableType, AnyType>;
 
+function matchValue(column: AnyType, value: AnyType): SQL | undefined {
+	if (value === null) return isNull(column);
+
+	if (Array.isArray(value)) {
+		const values = value.filter((item) => item !== null);
+		const conditions: SQL[] = [];
+		if (values.length) conditions.push(inArray(column, values as AnyType[]));
+		if (values.length !== value.length) conditions.push(isNull(column));
+		if (!conditions.length) return undefined;
+		return conditions.length === 1 ? conditions[0] : (or(...conditions) as SQL);
+	}
+
+	// `false` means "not set": match NULL or false so the filter treats a missing
+	// value the same as an explicit false (e.g. unverified emails).
+	if (value === false) return or(isNull(column), eq(column, false)) as SQL;
+
+	return eq(column, value as AnyType);
+}
+
 // Builds the *basic* WHERE conditions for a table and returns them as an array
 // so callers can spread in their own custom conditions before combining.
-// Always excludes soft-deleted rows when the table has a `deletedAt` column.
+// Always excludes soft-deleted rows when the table has a `deletedAt` column, and
+// confines the query to the request's organization when the table has an
+// `organizationId` one.
 export function dbWhereBuilder<T extends TableType>(
 	params: WhereParams<T>,
 ): SQL[] {
@@ -41,19 +63,24 @@ export function dbWhereBuilder<T extends TableType>(
 
 	if (t.deletedAt) conditions.push(isNull(t.deletedAt));
 
+	// The tenant guard, in the same shape as the soft-delete one above: a table
+	// that carries the column is always filtered, so isolation does not depend on
+	// any caller remembering to ask for it. Throws outside a request scope rather
+	// than falling back to every organization's rows.
+	if (t.organizationId && !currentTenant()?.system) {
+		conditions.push(eq(t.organizationId, requireTenantId()));
+	}
+
 	if (params.where) {
 		for (const [key, value] of Object.entries(params.where)) {
+			// `organizationId` is never a caller's to set: `QueryInputType.where` is
+			// an open record fed from URL params, and the guard above already fixed
+			// it to the session's organization.
+			if (key === "organizationId") continue;
 			if (value !== undefined && t[key]) {
-				conditions.push(
-					// An array value matches any of the listed values (multi-select filters).
-					Array.isArray(value)
-						? inArray(t[key], value as AnyType[])
-						: // `false` means "not set": match NULL or false so the filter treats
-							// a missing value the same as an explicit false (e.g. unverified emails).
-							value === false
-							? (or(isNull(t[key]), eq(t[key], false)) as SQL)
-							: eq(t[key], value as AnyType),
-				);
+				const condition = matchValue(t[key], value);
+				// An empty list yields no condition rather than an empty `in ()`.
+				if (condition) conditions.push(condition);
 			}
 		}
 	}
@@ -69,13 +96,17 @@ export function dbWhereBuilder<T extends TableType>(
 	return conditions;
 }
 
-// Recursively injects `isNull(deletedAt)` into every relation of a `with` tree so
-// soft-deleted related rows are excluded at every depth, mirroring dbWhereBuilder's
-// top-level guard. Uses the callback-form `where` so it never needs the relation's
-// target table name — it inspects `fields.deletedAt` on the actual target columns
-// (tables without one are skipped). Preserves/ANDs any caller-supplied nested `where`,
-// and normalizes the `true` shorthand into a config object.
-function withSoftDelete(withRel: AnyType): AnyType {
+// Recursively injects the same guards dbWhereBuilder applies at the top level into
+// every relation of a `with` tree, so neither soft-deleted nor other-tenant rows
+// can arrive through a nested relation at any depth. Uses the callback-form `where`
+// so it never needs the relation's target table name — it inspects the actual
+// target columns (tables without one are skipped). Preserves/ANDs any
+// caller-supplied nested `where`, and normalizes the `true` shorthand into a
+// config object.
+//
+// The tenant id is resolved once by the caller and passed down: a relation tree is
+// built inside a request, so every level belongs to the same organization.
+function withRowGuards(withRel: AnyType, organizationId?: string): AnyType {
 	if (!withRel) return withRel;
 	const out: AnyType = {};
 	for (const [key, value] of Object.entries(withRel)) {
@@ -84,13 +115,15 @@ function withSoftDelete(withRel: AnyType): AnyType {
 		config.where = (fields: AnyType, ops: AnyType) => {
 			const conds: AnyType[] = [];
 			if (fields.deletedAt) conds.push(ops.isNull(fields.deletedAt));
+			if (organizationId && fields.organizationId)
+				conds.push(ops.eq(fields.organizationId, organizationId));
 			if (userWhere)
 				conds.push(
 					typeof userWhere === "function" ? userWhere(fields, ops) : userWhere,
 				);
 			return conds.length ? ops.and(...conds) : undefined;
 		};
-		if (config.with) config.with = withSoftDelete(config.with);
+		if (config.with) config.with = withRowGuards(config.with, organizationId);
 		out[key] = config;
 	}
 	return out;
@@ -98,6 +131,10 @@ function withSoftDelete(withRel: AnyType): AnyType {
 
 // Returns an un-awaited relational query. Callers await it (optionally inside a
 // transaction via options.client) and can pass options.conditions for custom filters.
+// Those conditions may only reference this table's columns: the relational query
+// builder rewrites every Drizzle `Column` in the WHERE to this table's alias, so a
+// column of another table quietly becomes one of this table's (see the note on
+// `BuilderOptions.conditions`). Reference other tables via `col()` in sql.ts.
 const queryBuilder = ((
 	params: QueryParamType<TableType>,
 	{ client = db, conditions = [], first = false }: BuilderOptions = {},
@@ -116,7 +153,7 @@ const queryBuilder = ((
 
 	const config = {
 		columns,
-		with: withSoftDelete(withRel),
+		with: withRowGuards(withRel, currentTenant()?.organizationId ?? undefined),
 		where: where.length ? and(...where) : undefined,
 		orderBy,
 	};
@@ -180,10 +217,19 @@ const insertBuilder: DbInsertBuilder = (
 	const t = tables[table] as AnyType;
 	const list = Array.isArray(values) ? values : [values];
 
+	// `organizationId` is stamped from the request scope after the caller's values,
+	// so a row can only ever land in the organization the request belongs to —
+	// the write-side twin of the WHERE guard in dbWhereBuilder.
+	const organizationId =
+		t.organizationId && !currentTenant()?.system
+			? requireTenantId()
+			: undefined;
+
 	const rows = list.map((v: AnyType) => ({
 		id: v.id ?? generateId(),
 		...v,
 		...(userId ? { createdBy: userId } : {}),
+		...(organizationId ? { organizationId } : {}),
 	}));
 
 	const query = client.insert(t).values(rows);

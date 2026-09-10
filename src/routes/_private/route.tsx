@@ -11,6 +11,16 @@ export const Route = createFileRoute("/_private")({
 				search: { redirect: location.href },
 			});
 		}
+
+		// Signed in, but with nothing to be signed in *to*: no membership means no
+		// role and no tenant, so every list would be empty and every write would be
+		// refused by the builders. Send them somewhere they can act instead.
+		if (
+			!context.user.organizationId &&
+			!location.pathname.startsWith("/settings/organization/create")
+		) {
+			throw redirect({ to: "/settings/organization/create" });
+		}
 	},
 	component: RouteComponent,
 });

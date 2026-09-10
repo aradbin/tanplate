@@ -10,7 +10,16 @@ import {
 	EmptyTitle,
 } from "@/components/ui/empty";
 
-export default function ErrorComponent() {
+/**
+ * The generic "something failed" page. `description` lets a route that knows *why*
+ * say so — a loader rejecting on a domain rule (`AppError`) carries a message
+ * written for the user, the same one the RPC client would have shown in a toast.
+ */
+export default function ErrorComponent({
+	description = "Something went wrong. Please try again later",
+}: {
+	description?: string;
+}) {
 	return (
 		<Empty className="absolute w-3/4 max-w-200 top-10 border border-dashed py-20">
 			<EmptyHeader>
@@ -18,9 +27,7 @@ export default function ErrorComponent() {
 					<Ban />
 				</EmptyMedia>
 				<EmptyTitle>Ooops</EmptyTitle>
-				<EmptyDescription>
-					Something went wrong. Please try again later
-				</EmptyDescription>
+				<EmptyDescription>{description}</EmptyDescription>
 			</EmptyHeader>
 			<EmptyContent>
 				<div className="flex gap-2">
